@@ -1,0 +1,11 @@
+volume = 69
+muted = False
+left_key = a
+right_key = d
+jump_key = space
+attack_key = left_control
+pause_key = escape
+highscore = 47
+start_money = 120
+showPlayerHitbox = False
+showCopHitboxes = False
