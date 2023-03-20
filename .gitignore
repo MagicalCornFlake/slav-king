@@ -8,7 +8,7 @@ __pycache__
 # Local data files
 .*
 !.gitignore
-data.json
+data/settings.txt
 
 # Local data folders
 cache

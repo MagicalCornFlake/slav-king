@@ -1,37 +1,42 @@
-import pygame
+"""Variable definitions for Slav King."""
+
 import random
+import pygame
+
 pygame.mixer.pre_init(44100, -16, 2, 1024)
 pygame.mixer.init()
 pygame.init()
 
 # Pygame window
-win_width = 960
-win_height = 540
-win = pygame.display.set_mode((win_width, win_height), pygame.SRCALPHA)  # and pygame.RESIZABLE)
+WIN_WIDTH = 960
+WIN_HEIGHT = 540
+win = pygame.display.set_mode(
+    (WIN_WIDTH, WIN_HEIGHT), pygame.SRCALPHA
+)  # and pygame.RESIZABLE)
 pygame.display.set_caption("Slav King")
 
 # Resources
-image_dir = "data/images/"
-sprite_dir = "data/sprites/"
-audio_dir = "data/audio/"
+IMAGE_DIR = "data/images/"
+SPRITE_DIR = "data/sprites/"
+AUDIO_DIR = "data/audio/"
 
-bg = pygame.image.load(image_dir + "bg_main.png")
-bg_store = pygame.image.load(image_dir + "bg_store.png")
-bullet_stack = pygame.image.load(image_dir + "icon_bullets.png")
-coin_stack = pygame.image.load(image_dir + "icon_coins.png")
-mayo_jar = pygame.image.load(image_dir + "icon_mayonnaise.png")
-mayo_jar_bw = pygame.image.load(image_dir + "icon_mayonnaise_bw.png")
-beer_bottle = pygame.image.load(image_dir + "icon_beer.png")
-beer_bottle_bw = pygame.image.load(image_dir + "icon_beer_bw.png")
-store_icon = pygame.image.load(image_dir + "icon_store.png")
-mouse_icon = pygame.image.load(image_dir + "icon_mouse.png")
-back = pygame.image.load(image_dir + "icon_back.png")
-star_0 = pygame.image.load(image_dir + "star_empty.png")
-star_1 = pygame.image.load(image_dir + "star_filled.png")
+bg = pygame.image.load(IMAGE_DIR + "bg_main.png")
+bg_store = pygame.image.load(IMAGE_DIR + "bg_store.png")
+bullet_stack = pygame.image.load(IMAGE_DIR + "icon_bullets.png")
+coin_stack = pygame.image.load(IMAGE_DIR + "icon_coins.png")
+mayo_jar = pygame.image.load(IMAGE_DIR + "icon_mayonnaise.png")
+mayo_jar_bw = pygame.image.load(IMAGE_DIR + "icon_mayonnaise_bw.png")
+beer_bottle = pygame.image.load(IMAGE_DIR + "icon_beer.png")
+beer_bottle_bw = pygame.image.load(IMAGE_DIR + "icon_beer_bw.png")
+store_icon = pygame.image.load(IMAGE_DIR + "icon_store.png")
+mouse_icon = pygame.image.load(IMAGE_DIR + "icon_mouse.png")
+back = pygame.image.load(IMAGE_DIR + "icon_back.png")
+star_0 = pygame.image.load(IMAGE_DIR + "star_empty.png")
+star_1 = pygame.image.load(IMAGE_DIR + "star_filled.png")
 
 # Scaling of resources
-pause_bg = pygame.Surface((win_width, win_height))
-pause_bg.fill((0, 0, 0))    
+pause_bg = pygame.Surface((WIN_WIDTH, WIN_HEIGHT))
+pause_bg.fill((0, 0, 0))
 pause_bg.set_alpha(192)
 bg = pygame.transform.scale(bg, (960, 540))
 bullet_stack = pygame.transform.scale(bullet_stack, (64, 64))
@@ -59,8 +64,14 @@ cop_amount = 1
 win_x = 0
 pause_menu = "main"
 previous_pause_menu = ""
-pause_instructions = {"main": "unpause", "volume": "options", "options": "main", "dev": "options", "shop": "prev",
-                      "quit": "main"}
+pause_instructions = {
+    "main": "unpause",
+    "volume": "options",
+    "options": "main",
+    "dev": "options",
+    "shop": "prev",
+    "quit": "main",
+}
 run = True
 firing = False
 paused = False
