@@ -97,5 +97,9 @@ clock = pygame.time.Clock()  # To make calling the method quicker
 for c in range(0, 8):
     pygame.mixer.Channel(c)
 
+joysticks = [pygame.joystick.Joystick(i) for i in range(pygame.joystick.get_count())]
+for joystick in joysticks:
+    joystick.init()
+
 # This is a PyCharm bug, the parameter is required
 pygame.mixer.set_reserved(1)
