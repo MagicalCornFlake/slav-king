@@ -415,12 +415,20 @@ class Ability:
 class Button:
     """Base class for the settings buttons."""
 
-    def __init__(self, text, function, selected=False):
+    def __init__(self, text: str, next_menu: str = None, on_click=None, selected=False):
         self.text_message = text
         self.text = v.standard_font.render(text, 1, (0, 0, 0))
-        self.function = function
         self.dimensions = None
         self.selected = selected
+        if on_click is None:
+            if next_menu is not None:
+
+                def callback():
+                    v.pause_menu = next_menu
+
+                self.on_click = callback
+        else:
+            self.on_click = on_click
 
     def initialise_dimensions(self):
         """Initialises the sprite dimensions."""
@@ -475,13 +483,13 @@ class Button:
         """Click handler for the given button."""
         if not v.paused:
             return
-        self.function()
+        self.on_click()
 
 
 # SLIDER CODE
 class Slider(Button):
     def __init__(self, text):
-        super().__init__(text, None)
+        super().__init__(text)
         self.label_text = text
         self.text = None
         self.slider_dimensions = None
@@ -869,21 +877,29 @@ def toggle_cop_hitbox():
     button_toggle_cop_hitbox.selected = settings["showCopHitboxes"]
 
 
-button_resume = Button("resume [ESC]", lambda: exec("v.paused = False"))
-button_options = Button("options...", lambda: exec("v.pause_menu = 'options'"))
-button_quit = Button("quit", lambda: exec("v.pause_menu = 'quit'"))
-button_volume = Button("music options...", lambda: exec("v.pause_menu = 'volume'"))
-button_options_dev = Button(
-    "developer options...", lambda: exec("v.pause_menu = 'dev'")
-)
-button_back = Button("back... [ESC]", lambda: exec("v.pause_menu = 'main'"))
+def unpause():
+    v.paused = False
+
+
+def quit_game():
+    v.run = False
+
+
+button_resume = Button("resume [ESC]", on_click=unpause)
+button_options = Button("options...", next_menu="options")
+button_quit = Button("quit", next_menu="quit")
+button_volume = Button("music options...", next_menu="volume")
+button_options_dev = Button("developer options...", next_menu="dev")
+button_back = Button("back... [ESC]", next_menu="main")
 slider_volume = Slider("volume: {vol}")
-button_mute_music = Button("mute background music", toggle_mute, settings["muted"])
-button_back_volume = Button("back... [ESC]", lambda: exec("v.pause_menu = 'options'"))
-button_toggle_slav_hitbox = Button("toggle player hitbox", toggle_slav_hitbox)
-button_toggle_cop_hitbox = Button("toggle enemy hitboxes", toggle_cop_hitbox)
-button_no = Button("no", lambda: exec("v.pause_menu = 'main'"))
-button_yes = Button("yes", lambda: exec("v.run = False"))
+button_mute_music = Button(
+    "mute background music", on_click=toggle_mute, selected=settings["muted"]
+)
+button_back_volume = Button("back... [ESC]", next_menu="options")
+button_toggle_slav_hitbox = Button("toggle player hitbox", on_click=toggle_slav_hitbox)
+button_toggle_cop_hitbox = Button("toggle enemy hitboxes", on_click=toggle_cop_hitbox)
+button_no = Button("no", next_menu="main")
+button_yes = Button("yes", on_click=quit_game)
 
 buttons = {
     "main": [button_resume, button_options, button_quit],
@@ -1179,15 +1195,16 @@ while v.run:
                     usable_powerup.affordable = money_count >= usable_powerup.cost
                 for purchasable in v.purchasables:
                     purchasable.affordable = money_count >= purchasable.cost
-        elif (
-            v.slider_engaged
-            and event.type == pygame.MOUSEBUTTONUP
+        elif v.slider_engaged and (
+            event.type == pygame.MOUSEBUTTONUP
             and event.button == 1
+            or event.type == pygame.JOYBUTTONUP
+            and event.button == get_button_index("select_key")
         ):
             v.slider_engaged = False
 
     # If dragging volume slider
-    if pygame.mouse.get_pressed(num_buttons=3)[0] and v.slider_engaged:
+    if v.slider_engaged and (select_button_held or pygame.mouse.get_pressed(num_buttons=3)[0]):
         # Converts mouse position on slider into volume percentage
         temp_volume = int(
             (mouse_pos[0] - (v.WIN_WIDTH // 2 - v.WIN_WIDTH / 4))
@@ -1207,7 +1224,10 @@ while v.run:
     mouse_abs_pos = Point()
     windll.user32.GetCursorPos(byref(mouse_abs_pos))
     # print(mouse_abs_pos)
+    select_button_held = False
     for joystick in v.joysticks:
+        if joystick.get_button(get_button_index("select_key")):
+            select_button_held = True
         axis_x = joystick.get_axis(2)
         axis_y = joystick.get_axis(3)
         new_mouse_pos = [mouse_abs_pos.x, mouse_abs_pos.y]
