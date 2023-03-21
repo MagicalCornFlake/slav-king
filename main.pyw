@@ -1,5 +1,6 @@
 """Main module for Slav King."""
 import pygame
+from ctypes import windll, Structure, c_long, byref
 
 from modules import setup
 from modules import variables as v
@@ -10,6 +11,17 @@ settings = setup.init()
 god_mode = False
 INFINITE_AMMO = False
 money_count = settings["start_money"]
+
+
+class Point(Structure):
+    _fields_ = [("x", c_long), ("y", c_long)]
+
+    @property
+    def list(self):
+        return [self.x, self.y]
+
+    def __repr__(self):
+        return f"{self.x}, {self.y}"
 
 
 class Effect:
@@ -954,7 +966,13 @@ def get_key_index(key_name: str) -> int:
 
 def get_button_index(key_name: str) -> int:
     """Returns the controller button index corresponding to the action name."""
-    return {"jump_key": 0, "attack_key": 2, "pause_key": 7}.get(key_name)
+    return {
+        "select_key": 0,
+        "back_key": 1,
+        "attack_key": 2,
+        "jump_key": 3,
+        "pause_key": 7,
+    }.get(key_name)
 
 
 # MAIN LOOP
@@ -989,6 +1007,14 @@ while v.run:
 
         return keys[get_key_index(key_name)]
 
+    def go_back_in_pause_menu():
+        v.pause_menu = v.pause_instructions[v.pause_menu]
+        if v.pause_menu == "unpause":
+            v.paused = False
+            pygame.mixer.unpause()
+        elif v.pause_menu == "prev":
+            v.pause_menu = v.previous_pause_menu
+
     # Detects v.window updates
     for event in pygame.event.get():
         if event.type == pygame.QUIT:  # If user clicks red 'x_pos' button to close
@@ -1011,15 +1037,14 @@ while v.run:
                     else:  # Plays empty mag sound effect if space was pressed this frame
                         v.sounds.append(Effect("bullet_empty"))
             # If escape was pressed this frame
-            elif user_input == get_index_function("pause_key"):
+            elif (
+                user_input == get_index_function("pause_key")
+                or v.paused
+                and user_input == get_index_function("back_key")
+            ):
                 if v.paused:
                     # Defines what pressing the escape key should do inside pause menu
-                    v.pause_menu = v.pause_instructions[v.pause_menu]
-                    if v.pause_menu == "unpause":
-                        v.paused = False
-                        pygame.mixer.unpause()
-                    elif v.pause_menu == "prev":
-                        v.pause_menu = v.previous_pause_menu
+                    go_back_in_pause_menu()
                 else:  # Pauses game if escape is pressed
                     v.paused = True
                     v.pause_menu = "main"
@@ -1037,128 +1062,128 @@ while v.run:
                 v.sounds.append(Effect("bullet_fire_" + v.selected_gun.name + "_end"))
 
         # If a mouse button is pressed this frame
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:  # If that mouse button is the left mouse button
-                # If clicked mouse in pause menu
-                if v.paused:
-                    for button in buttons[v.pause_menu]:
-                        dim = button.dimensions
-                        # Check if the mouse is within the button's boundary
-                        if (
-                            dim[0] < mouse_pos[0] < dim[0] + dim[2]
-                            and dim[1] < mouse_pos[1] < dim[1] + dim[3]
-                        ):
-                            v.slider_engaged = button is slider_volume
-                            if button is slider_volume:
-                                settings["muted"] = False
-                                button_mute_music.selected = False
-                            else:
-                                button.do_action()  # Sends message that button was clicked
-                            break  # Not sure if this is needed but it can't do any harm
-
-                # If clicked mouse in game
-                else:
-                    for powerup_icon in powerups:
-                        dim = powerup_icon.dimensions
-                        if (
-                            dim[0] < mouse_pos[0] < dim[0] + dim[2]
-                            and dim[1] < mouse_pos[1] < dim[1] + dim[3]
-                            and powerup_icon.owned > 0
-                            and powerup_icon.progress == 0
-                        ):
-                            powerup_icon.activate()
-                            v.sounds.append(Effect("mayo"))
-                            v.sounds.append(Effect("eating"))
-                    if v.cop_hovering_over is not None:
-                        if money_count >= 100:
-                            money_count -= 100
-                            v.wanted_level = 0
-                            v.sounds.append(Effect("purchase"))
-                        else:
-                            v.sounds.append(Effect("error"))
-                # If clicked mouse in shop
-                if v.pause_menu == "shop":
+        if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1) or (
+            event.type == pygame.JOYBUTTONDOWN
+            and event.button == get_button_index("select_key")
+        ):
+            # If clicked mouse in pause menu
+            if v.paused:
+                for button in buttons[v.pause_menu]:
+                    dim = button.dimensions
+                    # Check if the mouse is within the button's boundary
                     if (
-                        16 < mouse_pos[0] < 16 + 128
-                        and v.WIN_HEIGHT - 16 - 64 < mouse_pos[1] < v.WIN_HEIGHT - 16
+                        dim[0] < mouse_pos[0] < dim[0] + dim[2]
+                        and dim[1] < mouse_pos[1] < dim[1] + dim[3]
                     ):
-                        # Go back
-                        v.pause_menu = v.previous_pause_menu
+                        v.slider_engaged = button is slider_volume
+                        if button is slider_volume:
+                            settings["muted"] = False
+                            button_mute_music.selected = False
+                        else:
+                            button.do_action()  # Sends message that button was clicked
+                        break  # Not sure if this is needed but it can't do any harm
+
+            # If clicked mouse in game
+            else:
+                for powerup_icon in powerups:
+                    dim = powerup_icon.dimensions
+                    if (
+                        dim[0] < mouse_pos[0] < dim[0] + dim[2]
+                        and dim[1] < mouse_pos[1] < dim[1] + dim[3]
+                        and powerup_icon.owned > 0
+                        and powerup_icon.progress == 0
+                    ):
+                        powerup_icon.activate()
+                        v.sounds.append(Effect("mayo"))
+                        v.sounds.append(Effect("eating"))
+                if v.cop_hovering_over is not None:
+                    if money_count >= 100:
+                        money_count -= 100
+                        v.wanted_level = 0
+                        v.sounds.append(Effect("purchase"))
                     else:
-                        # If clicked on a gun
-                        for gun_icon in guns:
-                            dim = gun_icon.outer_hitbox
-                            if (
-                                dim[0] < mouse_pos[0] < dim[0] + dim[2]
-                                and dim[1] < mouse_pos[1] < dim[1] + dim[3]
-                            ):
-                                if gun_icon.owned:
+                        v.sounds.append(Effect("error"))
+            # If clicked mouse in shop
+            if v.pause_menu == "shop":
+                if (
+                    16 < mouse_pos[0] < 16 + 128
+                    and v.WIN_HEIGHT - 16 - 64 < mouse_pos[1] < v.WIN_HEIGHT - 16
+                ):
+                    # Go back
+                    v.pause_menu = v.previous_pause_menu
+                else:
+                    # If clicked on a gun
+                    for gun_icon in guns:
+                        dim = gun_icon.outer_hitbox
+                        if (
+                            dim[0] < mouse_pos[0] < dim[0] + dim[2]
+                            and dim[1] < mouse_pos[1] < dim[1] + dim[3]
+                        ):
+                            if gun_icon.owned:
+                                v.selected_gun = gun_icon
+                                if gun_icon.name == "Beretta":
+                                    v.purchasables = [purchasable_light_ammo]
+                                elif gun_icon.name == "Deagle":
+                                    v.purchasables = [purchasable_heavy_ammo]
+                            else:
+                                if gun_icon.affordable:
+                                    gun_icon.owned = True
+                                    money_count -= gun_icon.cost
+                                    v.sounds.append(Effect("purchase"))
                                     v.selected_gun = gun_icon
                                     if gun_icon.name == "Beretta":
                                         v.purchasables = [purchasable_light_ammo]
                                     elif gun_icon.name == "Deagle":
                                         v.purchasables = [purchasable_heavy_ammo]
                                 else:
-                                    if gun_icon.affordable:
-                                        gun_icon.owned = True
-                                        money_count -= gun_icon.cost
-                                        v.sounds.append(Effect("purchase"))
-                                        v.selected_gun = gun_icon
-                                        if gun_icon.name == "Beretta":
-                                            v.purchasables = [purchasable_light_ammo]
-                                        elif gun_icon.name == "Deagle":
-                                            v.purchasables = [purchasable_heavy_ammo]
-                                    else:
-                                        v.sounds.append(Effect("error"))
-                                        gun_icon.flash()
-                            gun_icon.affordable = money_count >= gun_icon.cost
-                        # If clicked on a powerup
-                        for usable_powerup in purchasable_powerups:
-                            dim = usable_powerup.outer_hitbox
-                            if (
-                                dim[0] < mouse_pos[0] < dim[0] + dim[2]
-                                and dim[1] < mouse_pos[1] < dim[1] + dim[3]
-                            ):
-                                if usable_powerup.affordable:
-                                    usable_powerup.owned += 1
-                                    money_count -= usable_powerup.cost
-                                    v.sounds.append(Effect("purchase"))
-                                else:
                                     v.sounds.append(Effect("error"))
-                                    usable_powerup.flash()
-                            usable_powerup.affordable = (
-                                money_count >= usable_powerup.cost
-                            )
-                        # If clicked on another purchasable
-                        for purchasable in v.purchasables:
-                            dim = purchasable.outer_hitbox
-                            if (
-                                dim[0] < mouse_pos[0] < dim[0] + dim[2]
-                                and dim[1] < mouse_pos[1] < dim[1] + dim[3]
-                            ):
-                                if purchasable.affordable:
-                                    money_count -= purchasable.cost
-                                    v.ammo_count += 15
-                                    v.sounds.append(Effect("purchase"))
-                                else:
-                                    v.sounds.append(Effect("error"))
-                                    purchasable.flash()
-                            purchasable.affordable = money_count >= purchasable.cost
-
-                # If clicked shop icon
-                elif (
-                    16 < mouse_pos[0] < 16 + 64
-                    and v.WIN_HEIGHT - 16 - 64 < mouse_pos[1] < v.WIN_HEIGHT - 16
-                ):
-                    # Enter shop
-                    v.previous_pause_menu = v.pause_menu
-                    v.pause_menu = "shop"
-                    for gun_icon in guns:
+                                    gun_icon.flash()
                         gun_icon.affordable = money_count >= gun_icon.cost
+                    # If clicked on a powerup
                     for usable_powerup in purchasable_powerups:
+                        dim = usable_powerup.outer_hitbox
+                        if (
+                            dim[0] < mouse_pos[0] < dim[0] + dim[2]
+                            and dim[1] < mouse_pos[1] < dim[1] + dim[3]
+                        ):
+                            if usable_powerup.affordable:
+                                usable_powerup.owned += 1
+                                money_count -= usable_powerup.cost
+                                v.sounds.append(Effect("purchase"))
+                            else:
+                                v.sounds.append(Effect("error"))
+                                usable_powerup.flash()
                         usable_powerup.affordable = money_count >= usable_powerup.cost
+                    # If clicked on another purchasable
                     for purchasable in v.purchasables:
+                        dim = purchasable.outer_hitbox
+                        if (
+                            dim[0] < mouse_pos[0] < dim[0] + dim[2]
+                            and dim[1] < mouse_pos[1] < dim[1] + dim[3]
+                        ):
+                            if purchasable.affordable:
+                                money_count -= purchasable.cost
+                                v.ammo_count += 15
+                                v.sounds.append(Effect("purchase"))
+                            else:
+                                v.sounds.append(Effect("error"))
+                                purchasable.flash()
                         purchasable.affordable = money_count >= purchasable.cost
+
+            # If clicked shop icon
+            elif (
+                16 < mouse_pos[0] < 16 + 64
+                and v.WIN_HEIGHT - 16 - 64 < mouse_pos[1] < v.WIN_HEIGHT - 16
+            ):
+                # Enter shop
+                v.previous_pause_menu = v.pause_menu
+                v.pause_menu = "shop"
+                for gun_icon in guns:
+                    gun_icon.affordable = money_count >= gun_icon.cost
+                for usable_powerup in purchasable_powerups:
+                    usable_powerup.affordable = money_count >= usable_powerup.cost
+                for purchasable in v.purchasables:
+                    purchasable.affordable = money_count >= purchasable.cost
         elif (
             v.slider_engaged
             and event.type == pygame.MOUSEBUTTONUP
@@ -1183,6 +1208,21 @@ while v.run:
         elif temp_volume > 100:
             settings["volume"] = 100
         pygame.mixer.music.set_volume(settings["volume"] / 100)
+
+    mouse_abs_pos = Point()
+    windll.user32.GetCursorPos(byref(mouse_abs_pos))
+    # print(mouse_abs_pos)
+    for joystick in v.joysticks:
+        axis_x = joystick.get_axis(2)
+        axis_y = joystick.get_axis(3)
+        new_mouse_pos = [mouse_abs_pos.x, mouse_abs_pos.y]
+        for axis, axis_val in enumerate([axis_x, axis_y]):
+            if abs(axis_val) > 0.1:
+                new_mouse_pos[axis] += round(20 * axis_val)
+        if mouse_abs_pos.list == new_mouse_pos:
+            continue
+        windll.user32.SetCursorPos(*new_mouse_pos)
+    # ctypes.windll.user32.mouse_event(2, 0, 0, 0, 0)  # left down
 
     # GAME LOGIC
     if not v.paused:
