@@ -24,8 +24,8 @@ bg = pygame.image.load(IMAGE_DIR + "bg_main.png")
 bg_store = pygame.image.load(IMAGE_DIR + "bg_store.png")
 bullet_stack = pygame.image.load(IMAGE_DIR + "icon_bullets.png")
 coin_stack = pygame.image.load(IMAGE_DIR + "icon_coins.png")
-mayo_jar = pygame.image.load(IMAGE_DIR + "icon_mayonnaise.png")
-mayo_jar_bw = pygame.image.load(IMAGE_DIR + "icon_mayonnaise_bw.png")
+mayo_jar = pygame.image.load(IMAGE_DIR + "icon_mayo.png")
+mayo_jar_bw = pygame.image.load(IMAGE_DIR + "icon_mayo_bw.png")
 beer_bottle = pygame.image.load(IMAGE_DIR + "icon_beer.png")
 beer_bottle_bw = pygame.image.load(IMAGE_DIR + "icon_beer_bw.png")
 store_icon = pygame.image.load(IMAGE_DIR + "icon_store.png")
@@ -87,8 +87,8 @@ drops = []
 purchasables = []
 
 # Fonts used
-standard_font = pygame.font.SysFont("comicsans", 30, False)
-bold_font = pygame.font.SysFont("comicsans", 30, True)
+standard_font = pygame.font.SysFont("comicsans", 18, False)
+bold_font = pygame.font.SysFont("comicsans", 18, True)
 big_font = pygame.font.SysFont("comicsans", 45, True)
 big_outline_font = pygame.font.SysFont("comicsans", 49, True)
 large_font = pygame.font.SysFont("comicsans", 100, False)
