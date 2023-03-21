@@ -441,18 +441,18 @@ class Button:
             # The index of the button is either 1 or 0, which means its x_centre is the window width * either 1/4 or 3/4
             x_centre = v.WIN_WIDTH * (1 + 2 * sibling_buttons.index(self)) // 4
             # The x_pos position is the x_pos centre minus half of the button's width
-            # The y_pos position is at the halfway point of the window's height
+            # The y_pos position is almost at the halfway point of the window's height
             # The width of the button is one third of the window's width
             # The height of the button is 50px
             self.dimensions = [
                 x_centre - v.WIN_WIDTH // 6,
-                v.WIN_HEIGHT * 1.75 // 3,
+                v.WIN_HEIGHT * 7 // 12,
                 v.WIN_WIDTH // 3,
                 50,
             ]
         else:
-            # The index of the button is 0-2, which means its y_centre is the window height * either 2/6, 3/6 or 4/6
-            y_centre = v.WIN_HEIGHT * (2 + sibling_buttons.index(self)) // 6
+            # The index of the button is 0-2, which means its y_centre is the window height * either 3/8, 4/8 or 5/8
+            y_centre = v.WIN_HEIGHT * (3 + sibling_buttons.index(self)) // 8
             # The x_pos position is at the halfway point of the window's width
             # The y_pos position is either at 1/3, 1/2 or 2/3 of the window's height
             # The width of the button is one half of the window's width
@@ -1204,7 +1204,9 @@ while v.run:
             v.slider_engaged = False
 
     # If dragging volume slider
-    if v.slider_engaged and (select_button_held or pygame.mouse.get_pressed(num_buttons=3)[0]):
+    if v.slider_engaged and (
+        select_button_held or pygame.mouse.get_pressed(num_buttons=3)[0]
+    ):
         # Converts mouse position on slider into volume percentage
         temp_volume = int(
             (mouse_pos[0] - (v.WIN_WIDTH // 2 - v.WIN_WIDTH / 4))
