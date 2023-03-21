@@ -34,17 +34,11 @@ class Effect:
     volume = 0 if settings["muted"] else settings["volume"] / 100
     pygame.mixer.music.set_volume(volume)
 
-    def __init__(self, name: str, channel=None, should_loop: bool = False):
-        if channel is None:
-            channel = pygame.mixer.find_channel(True)
-        else:
-            channel = pygame.mixer.Channel(1)
+    def __init__(self, name: str):
+        channel = pygame.mixer.find_channel(True)
         self.timer = 0
         sound_object = pygame.mixer.Sound(f"{v.AUDIO_DIR}{name}.wav")
-        if should_loop:
-            channel.play(sound_object, -1)
-        else:
-            channel.play(sound_object)
+        channel.play(sound_object)
 
 
 class Projectile:
@@ -157,9 +151,9 @@ class Weapon:
     def draw(self):
         """Renders the weapon sprite in the shop menu."""
         if v.selected_gun == self:
-            self.text = v.bold_font.render(self.name + " - SELECTED", 1, [255] * 3)
+            self.text = v.bold_font.render(self.name + " [USING]", 1, [255] * 3)
         elif self.owned:
-            self.text = v.bold_font.render(self.name + " - OWNED", 1, [255] * 3)
+            self.text = v.bold_font.render(self.name + " [OWNED]", 1, [255] * 3)
         else:
             self.text = v.bold_font.render(
                 self.name + " - $" + str(self.cost), 1, [255] * 3
@@ -204,27 +198,26 @@ class AbilityPurchasable:
         self.owned_text = v.bold_font.render("0", 1, [255] * 3)
         self.affordable = money_count >= self.cost
         self.flash_sequence = -1
-        self.outer_hitbox = [self.x_pos, self.y_pos, 256, 164]
-        if self.name == "mayonnaise":
+        self.outer_hitbox = [self.x_pos, self.y_pos, 224, 164]
+        self.owned = 0
+        if self.name == "mayo":
             self.hitbox = [
-                self.x_pos + (256 - 75) // 2,
+                self.x_pos + (self.outer_hitbox[2] - 75) // 2,
                 self.y_pos + (144 - 116) // 2,
                 75,
                 116,
             ]
-            self.owned = 0
             self.img = pygame.transform.scale(self.img, (75, 116))
         elif self.name == "beer":
             self.hitbox = [
-                self.x_pos + (256 - 40) // 2,
+                self.x_pos + (self.outer_hitbox[2] - 40) // 2,
                 self.y_pos + (144 - 124) // 2,
                 40,
                 124,
             ]
-            self.owned = 0
             self.img = pygame.transform.scale(self.img, (40, 124))
         self.text_position = [
-            self.x_pos + 256 // 2 - self.text.get_width() // 2,
+            self.x_pos + self.outer_hitbox[2] // 2 - self.text.get_width() // 2,
             self.y_pos + 144 - 10,
         ]
         self.owned_text_position = [self.x_pos + 16, self.y_pos + 12]
@@ -265,19 +258,19 @@ class AmmoPurchasable:
         self.img = pygame.image.load(v.IMAGE_DIR + "icon_bullets.png")
         self.img = pygame.transform.scale(self.img, (96, 96))
         self.cost = cost
-        self.text = v.bold_font.render("15 rounds - $" + str(cost), 1, [255] * 3)
+        self.text = v.bold_font.render("15x - $" + str(cost), 1, [255] * 3)
         self.owned_text = v.bold_font.render(str(v.ammo_count), 1, [255] * 3)
         self.affordable = money_count >= self.cost
         self.flash_sequence = -1
-        self.outer_hitbox = [self.x_pos, self.y_pos, 256, 164]
+        self.outer_hitbox = [self.x_pos, self.y_pos, 176, 164]
         self.hitbox = [
-            self.x_pos + (256 - 96) // 2,
+            self.x_pos + (self.outer_hitbox[2] - 96) // 2,
             self.y_pos + (144 - 96) // 2,
             96,
             96,
         ]
         self.text_position = [
-            self.x_pos + 256 // 2 - self.text.get_width() // 2,
+            self.x_pos + self.outer_hitbox[2] // 2 - self.text.get_width() // 2,
             self.y_pos + 144 - 10,
         ]
         self.owned_text_position = [self.x_pos + 16, self.y_pos + 12]
@@ -668,6 +661,8 @@ class Enemy(object):
         minus = v.selected_gun.dmg
         if v.mayo_power:  # Double damage taken when player has mayo power
             minus *= 2
+        if v.beer_power:  # Triple damage taken when player has beer power
+            minus *= 3
         if self.health - minus > 0:
             self.health -= minus
         else:
@@ -738,32 +733,8 @@ def move(distance):
         drop.x_pos -= distance
 
 
-def fire(rapid_fire):
-    if not v.firing:
-        if rapid_fire:
-            v.sounds.append(
-                Effect(
-                    "bullet_fire_" + v.selected_gun.name + "_auto",
-                    channel="gun",
-                    should_loop=True,
-                )
-            )
-        elif v.selected_gun.full_auto:
-            v.sounds.append(
-                Effect(
-                    "bullet_fire_" + v.selected_gun.name + "_start",
-                    channel="gun",
-                    should_loop=False,
-                )
-            )
-        else:
-            v.sounds.append(
-                Effect(
-                    "bullet_fire_" + v.selected_gun.name,
-                    channel="gun",
-                    should_loop=False,
-                )
-            )
+def fire():
+    v.sounds.append(Effect("bullet_fire_" + v.selected_gun.name))
     if v.shot_cooldown_time_passed >= v.shot_cooldown:
         # Makes the script wait a certain amount of time before a gun is able to fire again (rof = Rate of Fire)
         rate_of_fire = v.selected_gun.rof / 60  # rounds per second
@@ -923,34 +894,57 @@ buttons = {
     "shop": [],
 }
 
-# gun_mp5 = weapon(v.WIN_WIDTH - 128 - 256, v.WIN_HEIGHT // 8, name="MP5", cost=100, dmg=30,
-# rof=750, full_auto=True)
-# gun_ak47 = weapon(128, v.WIN_HEIGHT // 2, name="AK-47", cost=300, dmg=50, rof=630, full_auto=True)
 gun_beretta = Weapon(
-    (32, v.WIN_HEIGHT // 8), name="Beretta", cost=100, dmg=20, rof=1000, full_auto=False
+    (16, v.WIN_HEIGHT // 8),
+    name="Beretta",
+    cost=50,
+    dmg=20,
+    rof=1000,
+    full_auto=False,
 )
 gun_deagle = Weapon(
-    (v.WIN_WIDTH // 2 - 128, v.WIN_HEIGHT // 8),
-    "Deagle",
-    cost=300,
+    (32, v.WIN_HEIGHT // 2),
+    name="Deagle",
+    cost=100,
     dmg=60,
     rof=200,
     full_auto=False,
 )
-guns = [gun_beretta, gun_deagle]
+gun_mp5 = Weapon(
+    (v.WIN_WIDTH // 2 - 128, v.WIN_HEIGHT // 2),
+    name="MP5",
+    cost=200,
+    dmg=30,
+    rof=750,
+    full_auto=True,
+)
+gun_ak47 = Weapon(
+    (v.WIN_WIDTH - 256 - 32, v.WIN_HEIGHT // 2),
+    name="AK-47",
+    cost=300,
+    dmg=50,
+    rof=630,
+    full_auto=True,
+)
+guns = [
+    gun_beretta,
+    gun_deagle,
+    gun_mp5,
+    gun_ak47,
+]
 
 purchasable_light_ammo = AmmoPurchasable(
-    v.WIN_WIDTH - 32 - 256, v.WIN_HEIGHT // 8, cost=75
+    v.WIN_WIDTH - 16 - 176, v.WIN_HEIGHT // 8, cost=75
 )
 purchasable_heavy_ammo = AmmoPurchasable(
-    v.WIN_WIDTH - 32 - 256, v.WIN_HEIGHT // 8, cost=100
+    v.WIN_WIDTH - 16 - 176, v.WIN_HEIGHT // 8, cost=100
 )
 
 purchasable_powerup_mayo = AbilityPurchasable(
-    32, v.WIN_HEIGHT // 2, name="mayonnaise", cost=50
+    16 * 2 + 256, v.WIN_HEIGHT // 8, name="mayo", cost=50
 )
 purchasable_powerup_beer = AbilityPurchasable(
-    (v.WIN_WIDTH - 256) // 2, v.WIN_HEIGHT // 2, name="beer", cost=100
+    16 * 3 + 256 + 224, v.WIN_HEIGHT // 8, name="beer", cost=100
 )
 purchasable_powerups = [purchasable_powerup_mayo, purchasable_powerup_beer]
 
@@ -973,6 +967,14 @@ def get_button_index(key_name: str) -> int:
         "jump_key": 3,
         "pause_key": 7,
     }.get(key_name)
+
+
+def update_selected_gun(gun: Weapon) -> None:
+    v.selected_gun = gun
+    if gun.name in ["Beretta", "MP5"]:
+        v.purchasables = [purchasable_light_ammo]
+    elif gun.name in ["Deagle", "AK-47"]:
+        v.purchasables = [purchasable_heavy_ammo]
 
 
 # MAIN LOOP
@@ -1015,6 +1017,17 @@ while v.run:
         elif v.pause_menu == "prev":
             v.pause_menu = v.previous_pause_menu
 
+    def attempt_fire() -> None:
+        if (
+            v.shot_cooldown_time_passed >= v.shot_cooldown
+            and v.selected_gun is not None
+        ):
+            if v.ammo_count > 0 or INFINITE_AMMO:
+                fire()
+            else:  # Plays empty mag sound effect if space was pressed this frame
+                v.sounds.append(Effect("bullet_empty"))
+                v.firing = False
+
     # Detects v.window updates
     for event in pygame.event.get():
         if event.type == pygame.QUIT:  # If user clicks red 'x_pos' button to close
@@ -1027,15 +1040,8 @@ while v.run:
                 if event.type == pygame.KEYDOWN
                 else (event.button, get_button_index)
             )
-            if (
-                user_input == get_index_function("attack_key")
-                and v.selected_gun is not None
-            ):
-                if v.shot_cooldown_time_passed >= v.shot_cooldown:
-                    if v.ammo_count > 0 or INFINITE_AMMO:
-                        fire(rapid_fire=False)
-                    else:  # Plays empty mag sound effect if space was pressed this frame
-                        v.sounds.append(Effect("bullet_empty"))
+            if user_input == get_index_function("attack_key"):
+                attempt_fire()
             # If escape was pressed this frame
             elif (
                 user_input == get_index_function("pause_key")
@@ -1056,10 +1062,7 @@ while v.run:
             or event.type == pygame.JOYBUTTONUP
             and event.button == get_button_index("attack_key")
         ):
-            firing = False
-            if v.selected_gun.full_auto:
-                pygame.mixer.Channel(1).stop()
-                v.sounds.append(Effect("bullet_fire_" + v.selected_gun.name + "_end"))
+            v.firing = False
 
         # If a mouse button is pressed this frame
         if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1) or (
@@ -1120,21 +1123,13 @@ while v.run:
                             and dim[1] < mouse_pos[1] < dim[1] + dim[3]
                         ):
                             if gun_icon.owned:
-                                v.selected_gun = gun_icon
-                                if gun_icon.name == "Beretta":
-                                    v.purchasables = [purchasable_light_ammo]
-                                elif gun_icon.name == "Deagle":
-                                    v.purchasables = [purchasable_heavy_ammo]
+                                update_selected_gun(gun_icon)
                             else:
                                 if gun_icon.affordable:
                                     gun_icon.owned = True
                                     money_count -= gun_icon.cost
                                     v.sounds.append(Effect("purchase"))
-                                    v.selected_gun = gun_icon
-                                    if gun_icon.name == "Beretta":
-                                        v.purchasables = [purchasable_light_ammo]
-                                    elif gun_icon.name == "Deagle":
-                                        v.purchasables = [purchasable_heavy_ammo]
+                                    update_selected_gun(gun_icon)
                                 else:
                                     v.sounds.append(Effect("error"))
                                     gun_icon.flash()
@@ -1227,6 +1222,8 @@ while v.run:
     # GAME LOGIC
     if not v.paused:
         v.shot_cooldown_time_passed += 1 / 27  # Seconds
+        if v.firing and v.selected_gun is not None and v.selected_gun.full_auto:
+            attempt_fire()
         if len(v.cops) < v.cop_amount:
             if v.time_passed_since_last_cop_spawned >= v.cop_spawn_delay:
                 v.cops.append(
