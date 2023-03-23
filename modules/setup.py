@@ -72,9 +72,12 @@ def read_settings() -> dict[str, any]:
         "showPlayerHitbox": False,
         "showCopHitboxes": False,
     }
-    with open("data/settings.txt", "r", encoding="UTF-8") as file:
-        # Reads the settings.txt file in which program settings are stored
-        data = file.readlines()
+    try:
+        with open("data/settings.txt", "r", encoding="UTF-8") as file:
+            # Reads the settings.txt file in which program settings are stored
+            data = file.readlines()
+    except FileNotFoundError:
+        data = []
     for line in data:
         line = line.rstrip()  # Removes trailing newlines from each line
         # Splits each line into an 'item' and a 'value'
