@@ -1,9 +1,12 @@
 """Main module for Slav King."""
 import pygame
-from ctypes import windll, Structure, c_long, byref
 
 from modules import setup
 from modules import variables as v
+try:
+    from modules import win_tools as os_tools
+except ImportError:
+    from modules import posix_tools as os_tools
 
 settings = setup.init()
 
@@ -11,17 +14,6 @@ settings = setup.init()
 god_mode = False
 INFINITE_AMMO = False
 money_count = settings["start_money"]
-
-
-class Point(Structure):
-    _fields_ = [("x", c_long), ("y", c_long)]
-
-    @property
-    def list(self):
-        return [self.x, self.y]
-
-    def __repr__(self):
-        return f"{self.x}, {self.y}"
 
 
 class Effect:
@@ -37,7 +29,7 @@ class Effect:
     def __init__(self, name: str):
         channel = pygame.mixer.find_channel(True)
         self.timer = 0
-        sound_object = pygame.mixer.Sound(f"{v.AUDIO_DIR}{name}.wav")
+        sound_object = pygame.mixer.Sound(f"{v.AUDIO_DIR}{name.lower()}.wav")
         channel.play(sound_object)
 
 
@@ -110,7 +102,8 @@ class Weapon:
     def __init__(self, pos, name, cost, dmg, rof, full_auto):
         self.x_pos, self.y_pos = pos
         self.name = name
-        self.img = pygame.image.load(v.IMAGE_DIR + "gun_" + name + ".png")
+        image_path = v.IMAGE_DIR + "gun_" + name.lower() + ".png"
+        self.img = pygame.image.load(image_path)
         self.cost = cost
         self.dmg = dmg  # damage
         self.rof = rof  # rate of fire
@@ -1223,24 +1216,12 @@ while v.run:
             settings["volume"] = 100
         pygame.mixer.music.set_volume(settings["volume"] / 100)
 
-    mouse_abs_pos = Point()
-    windll.user32.GetCursorPos(byref(mouse_abs_pos))
     # print(mouse_abs_pos)
     select_button_held = False
     for joystick in v.joysticks:
         if joystick.get_button(get_button_index("select_key")):
             select_button_held = True
-        axis_x = joystick.get_axis(2)
-        axis_y = joystick.get_axis(3)
-        new_mouse_pos = [mouse_abs_pos.x, mouse_abs_pos.y]
-        for axis, axis_val in enumerate([axis_x, axis_y]):
-            if abs(axis_val) > 0.1:
-                new_mouse_pos[axis] += round(20 * axis_val)
-        if mouse_abs_pos.list == new_mouse_pos:
-            continue
-        windll.user32.SetCursorPos(*new_mouse_pos)
-    # ctypes.windll.user32.mouse_event(2, 0, 0, 0, 0)  # left down
-
+        os_tools.update_cursor_pos(joystick)
     # GAME LOGIC
     if not v.paused:
         v.shot_cooldown_time_passed += 1 / 27  # Seconds
