@@ -14,7 +14,7 @@ class AmmoPurchasable:
         self.img = pygame.transform.scale(self.img, (96, 96))
         self.cost = cost
         self.bold_font = init.fonts["bold_font"]
-        self.text = self.bold_font.render("15x - ${cost}", 1, [255] * 3)
+        self.text = self.bold_font.render(f"15x - ${cost}", 1, [255] * 3)
         self.owned_text = self.bold_font.render(str(variables.ammo_count), 1, [255] * 3)
         self.affordable = money_count >= self.cost
         self.flash_sequence = -1

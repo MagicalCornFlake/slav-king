@@ -8,13 +8,13 @@ from modules.constants import IMAGE_DIR
 class Weapon:
     """Base class for the weapon object."""
 
-    def __init__(self, pos, name, cost, dmg, rof, full_auto, money_count):
+    def __init__(self, pos, name, cost, damage, rof, full_auto, money_count):
         self.x_pos, self.y_pos = pos
         self.name = name
         image_path = IMAGE_DIR + f"gun_{name.lower()}.png"
         self.img = pygame.image.load(image_path)
         self.cost = cost
-        self.dmg = dmg  # damage
+        self.damage = damage
         self.rof = rof  # rate of fire
         self.full_auto = full_auto  # if fully automatic fire is permitted
         self.bold_font = init.fonts["bold_font"]

@@ -31,13 +31,17 @@ clock = pygame.time.Clock()  # To make calling the method quicker
 cop_spawn_delay = random.randint(500, 2500) / 1000
 
 # Gets the volume from settings and converts it into decimal instead of percentage
-volume = 0 if settings["muted"] else settings["volume"] / 100
+volume = (
+    0
+    if settings.getboolean("General", "muted")
+    else settings.getint("General", "volume") / 100
+)
 pygame.mixer.music.set_volume(volume)
 
 # Cheats - Change these :D
 god_mode = False
 INFINITE_AMMO = False
-money_count = settings["start_money"]
+money_count = settings.getint("Cheats", "start_money")
 
 
 def move(distance):
@@ -96,15 +100,17 @@ def redraw_game_window(cop_hovering_over):
     elif variables.win_x < 0:
         win.blit(sprites["bg"], (variables.win_x + WIN_WIDTH, 0))
     for cop_to_draw in variables.cops:
-        cop_to_draw.draw(win, slav, settings)
-    slav.draw(win, settings)
+        cop_to_draw.draw(
+            win, slav, settings.getboolean("Developer Options", "show_cop_hitboxes")
+        )
+    slav.draw(win, settings.getboolean("Developer Options", "show_player_hitbox"))
     for drop in variables.drops:
         drop.draw(win, sprites)
     for bullet in variables.bullets:
         bullet.draw(win)
     score_text = fonts["bold_font"].render(f"score: {variables.score}", 1, [255] * 3)
     highscore_text = fonts["bold_font"].render(
-        f"highscore: {settings['highscore']}", 1, [255] * 3
+        f"highscore: {settings['Cheats']['highscore']}", 1, [255] * 3
     )
     fps_counter_text = fonts["bold_font"].render(
         f"{variables.fps:.1f} FPS",
@@ -132,11 +138,10 @@ def redraw_game_window(cop_hovering_over):
     if variables.paused:
         win.blit(sprites["bg_pause"], (0, 0))
         for button_in_menu in buttons[variables.pause_menu]:
-            arg = settings if isinstance(button_in_menu, Slider) else buttons
-            button_in_menu.draw(
-                win,
-                arg,
-            )
+            if isinstance(button_in_menu, Slider):
+                button_in_menu.draw(win, buttons, settings["General"])
+            else:
+                button_in_menu.draw(win, buttons)
         if variables.pause_menu == "shop":
             win.blit(sprites["bg_store"], (0, 0))
             win.blit(sprites["back"], (16, WIN_HEIGHT - 16 - 64 - 16))
@@ -181,23 +186,27 @@ slav = Player(128, WIN_HEIGHT - 100 - 256 + 64, 256, 256)
 
 
 def toggle_mute():
-    button_mute_music.selected = settings["muted"] = not settings["muted"]
-    if settings["muted"]:
+    new_value = not settings.getboolean("General", "muted")
+    settings["General"]["muted"] = str(new_value)
+    button_mute_music.selected = new_value
+    if settings.getboolean("General", "muted"):
         pygame.mixer.music.set_volume(0)
     else:
-        pygame.mixer.music.set_volume(settings["volume"] / 100)
+        pygame.mixer.music.set_volume(settings.getint("General", "volume") / 100)
 
 
 def toggle_slav_hitbox():
     """Toggles the visibility of the box drawn around the player sprite."""
-    settings["showPlayerHitbox"] = not settings["showPlayerHitbox"]
-    button_toggle_slav_hitbox.selected = settings["showPlayerHitbox"]
+    new_value = not settings.getboolean("Developer Options", "show_player_hitbox")
+    settings["Developer Options"]["show_player_hitbox"] = new_value
+    button_toggle_slav_hitbox.selected = new_value
 
 
 def toggle_cop_hitbox():
     """Toggles the visibility of the boxes drawn around the enemy sprites."""
-    settings["showCopHitboxes"] = not settings["showCopHitboxes"]
-    button_toggle_cop_hitbox.selected = settings["showCopHitboxes"]
+    new_value = not settings.getboolean("Developer Options", "show_cop_hitboxes")
+    settings["Developer Options"]["show_cop_hitboxes"] = new_value
+    button_toggle_cop_hitbox.selected = new_value
 
 
 def unpause():
@@ -216,7 +225,9 @@ button_options_dev = Button("developer options...", next_menu="dev")
 button_back = Button("back... [ESC]", next_menu="main")
 slider_volume = Slider("volume: {vol}")
 button_mute_music = Button(
-    "mute background music", on_click=toggle_mute, selected=settings["muted"]
+    "mute background music",
+    on_click=toggle_mute,
+    selected=settings.getboolean("General", "muted"),
 )
 button_back_volume = Button("back... [ESC]", next_menu="options")
 button_toggle_slav_hitbox = Button("toggle player hitbox", on_click=toggle_slav_hitbox)
@@ -237,7 +248,7 @@ gun_beretta = Weapon(
     (16, WIN_HEIGHT // 8),
     name="Beretta",
     cost=50,
-    dmg=20,
+    damage=20,
     rof=1000,
     full_auto=False,
     money_count=money_count,
@@ -246,7 +257,7 @@ gun_deagle = Weapon(
     (32, WIN_HEIGHT // 2),
     name="Deagle",
     cost=150,
-    dmg=60,
+    damage=60,
     rof=200,
     full_auto=False,
     money_count=money_count,
@@ -255,7 +266,7 @@ gun_mp5 = Weapon(
     (WIN_WIDTH // 2 - 128, WIN_HEIGHT // 2),
     name="MP5",
     cost=200,
-    dmg=30,
+    damage=30,
     rof=750,
     full_auto=True,
     money_count=money_count,
@@ -264,7 +275,7 @@ gun_ak47 = Weapon(
     (WIN_WIDTH - 256 - 32, WIN_HEIGHT // 2),
     name="AK-47",
     cost=300,
-    dmg=50,
+    damage=50,
     rof=630,
     full_auto=True,
     money_count=money_count,
@@ -298,17 +309,17 @@ powerups = [powerup_mayo, powerup_beer]
 
 def get_key_index(key_name: str) -> int:
     """Returns the integer index corresponding to the key binding name."""
-    return setup.key_index[settings[key_name]]
+    return pygame.key.key_code(settings["Keybindings"][key_name])
 
 
 def get_button_index(key_name: str) -> int:
     """Returns the controller button index corresponding to the action name."""
     return {
-        "select_key": 0,
-        "back_key": 1,
-        "attack_key": 2,
-        "jump_key": 3,
-        "pause_key": 7,
+        "select": 0,
+        "back": 1,
+        "attack": 2,
+        "jump": 3,
+        "pause": 7,
     }.get(key_name)
 
 
@@ -329,7 +340,7 @@ while variables.run:
 
     def is_key_pressed(key_name: str):
         """Checks if the given key is currently pressed this frame."""
-        directions = {"right_key": 1, "left_key": -1}
+        directions = {"right": 1, "left": -1}
         direction = directions.get(key_name)
 
         def check_joystick_movement(joystick: pygame.joystick.Joystick):
@@ -383,13 +394,13 @@ while variables.run:
                 if event.type == pygame.KEYDOWN
                 else (event.button, get_button_index)
             )
-            if user_input == get_index_function("attack_key"):
+            if user_input == get_index_function("attack"):
                 attempt_fire()
             # If escape was pressed this frame
             elif (
-                user_input == get_index_function("pause_key")
+                user_input == get_index_function("pause")
                 or variables.paused
-                and user_input == get_index_function("back_key")
+                and user_input == get_index_function("back")
             ):
                 if variables.paused:
                     # Defines what pressing the escape key should do inside pause menu
@@ -401,16 +412,16 @@ while variables.run:
         # Sound effect code
         elif variables.firing and (
             event.type == pygame.KEYUP
-            and event.key == get_key_index("attack_key")
+            and event.key == get_key_index("attack")
             or event.type == pygame.JOYBUTTONUP
-            and event.button == get_button_index("attack_key")
+            and event.button == get_button_index("attack")
         ):
             variables.firing = False
 
         # If a mouse button is pressed this frame
         if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1) or (
             event.type == pygame.JOYBUTTONDOWN
-            and event.button == get_button_index("select_key")
+            and event.button == get_button_index("select")
         ):
             # If clicked mouse in pause menu
             if variables.paused:
@@ -423,7 +434,7 @@ while variables.run:
                     ):
                         variables.slider_engaged = button is slider_volume
                         if button is slider_volume:
-                            settings["muted"] = False
+                            settings["General"]["muted"] = "False"
                             button_mute_music.selected = False
                         else:
                             button.do_action()  # Sends message that button was clicked
@@ -527,7 +538,7 @@ while variables.run:
             event.type == pygame.MOUSEBUTTONUP
             and event.button == 1
             or event.type == pygame.JOYBUTTONUP
-            and event.button == get_button_index("select_key")
+            and event.button == get_button_index("select")
         ):
             variables.slider_engaged = False
 
@@ -541,18 +552,13 @@ while variables.run:
         )
 
         # Changes the volume setting with a minimum of 0% and maximum of 100%
-        if 0 <= temp_volume <= 100:
-            settings["volume"] = temp_volume
-        elif temp_volume < 0:
-            settings["volume"] = 0
-        elif temp_volume > 100:
-            settings["volume"] = 100
-        pygame.mixer.music.set_volume(settings["volume"] / 100)
+        settings["General"]["volume"] = str(max(min(temp_volume, 100), 0))
+        pygame.mixer.music.set_volume(settings.getint("General", "volume") / 100)
 
     # print(mouse_abs_pos)
     select_button_held = False
     for joystick in joysticks:
-        if joystick.get_button(get_button_index("select_key")):
+        if joystick.get_button(get_button_index("select")):
             select_button_held = True
         os_tools.set_cursor_pos(joystick)
     # GAME LOGIC
@@ -601,7 +607,7 @@ while variables.run:
                     variables.firing = False
                     variables.score = 0
                     variables.ammo_count = 20
-                    money_count = settings["start_money"]
+                    money_count = settings.getint("Cheats", "start_money")
                     variables.wanted_level = 0
                     variables.cops = []
                     variables.cop_amount = 1
@@ -655,13 +661,13 @@ while variables.run:
                     variables.bullets.remove(fired_bullet)
                     break
         # Moving left
-        if is_key_pressed("left_key") or keys[pygame.K_LEFT]:
+        if is_key_pressed("left") or keys[pygame.K_LEFT]:
             move(-slav.vel)
             slav.left = True
             slav.right = False
             slav.standing = False
         # Moving right
-        elif is_key_pressed("right_key") or keys[pygame.K_RIGHT]:
+        elif is_key_pressed("right") or keys[pygame.K_RIGHT]:
             move(slav.vel)
             slav.right = True
             slav.left = False
@@ -672,7 +678,7 @@ while variables.run:
             slav.walk_count = 0
         # Jumping
         if not slav.jumping:
-            if is_key_pressed("jump_key") or keys[pygame.K_UP]:
+            if is_key_pressed("jump") or keys[pygame.K_UP]:
                 slav.jumping = True
         elif slav.jump_count > -40:
             slav.y_pos -= slav.jump_count
@@ -682,9 +688,10 @@ while variables.run:
             slav.jump_count = 40
             slav.jumping = False
 
-        if variables.score > settings["highscore"]:
+        if variables.score > settings.getint("Cheats", "highscore"):
             # Updates high score if user has surpassed it
-            settings["highscore"] = variables.score
+            settings["Cheats"]["highscore"] = str(variables.score)
     redraw_game_window(variables.cop_hovering_over)
 pygame.quit()
-setup.finish(settings)
+setup.write_settings(settings)
+setup.cleanup()

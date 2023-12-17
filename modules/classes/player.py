@@ -28,7 +28,7 @@ class Player:
         self.standing = True
         self.hitbox = [self.x_pos + 78, self.y_pos + 58, 100, 190]
 
-    def draw(self, win, settings):
+    def draw(self, win, show_player_hitbox):
         if self.walk_count >= 17:
             self.walk_count = 0
         if not self.standing:
@@ -51,7 +51,7 @@ class Player:
             else:
                 win.blit(self.walkLeft[0], (self.x_pos, self.y_pos))
         self.hitbox = [self.x_pos + 78, self.y_pos + 58, 100, 190]
-        if settings["showPlayerHitbox"]:
+        if show_player_hitbox:
             pygame.draw.rect(win, (0, 255, 0), self.hitbox, 2)
 
     def hit(self, win, guns, purchasable_powerups):  # When killed

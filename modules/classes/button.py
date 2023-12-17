@@ -1,3 +1,4 @@
+import configparser
 import pygame
 
 from modules import variables, init
@@ -87,18 +88,20 @@ class Slider(Button):
         self.text = None
         self.slider_dimensions = None
 
-    def draw(self, win, settings, bg_shade=32):
-        if settings["muted"]:
+    def draw(
+        self, win, buttons, volume_settings: configparser.SectionProxy, bg_shade=32
+    ):
+        if volume_settings.getboolean("muted"):
             volume = 0
             volume_text = "MUTED"
         else:
-            volume = settings["volume"] / 100
-            volume_text = f"{settings['volume']}%"
+            volume = volume_settings.getint("volume") / 100
+            volume_text = f"{volume_settings['volume']}%"
         self.text = self.standard_font.render(
             self.label_text.format(vol=volume_text), 1, (0, 0, 0)
         )
 
-        super().draw(bg_shade)
+        super().draw(win, buttons, bg_shade)
 
         self.slider_dimensions = [
             self.dimensions[0] + int((self.dimensions[2] - 20) * volume),

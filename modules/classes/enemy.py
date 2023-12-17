@@ -29,7 +29,7 @@ class Enemy:
         self.health = 100
         self.sprite_area = [self.x_pos, self.y_pos, 256, 256]
 
-    def draw(self, win, slav, settings):
+    def draw(self, win, slav, show_cop_hitboxes):
         if not variables.paused:
             self.move(slav)
         # If within 50px of player and currently in 'attack' animation
@@ -58,7 +58,7 @@ class Enemy:
             win, (0, 128, 0), (self.hitbox[0], self.hitbox[1] - 35, self.health, 20)
         )
         self.sprite_area = [self.x_pos, self.y_pos, 256, 256]
-        if settings["showCopHitboxes"]:
+        if show_cop_hitboxes:
             pygame.draw.rect(win, (255, 0, 0), self.hitbox, 2)
             pygame.draw.rect(win, (0, 0, 255), self.sprite_area, 2)
 
@@ -77,7 +77,7 @@ class Enemy:
         if variables.wanted_level == 0:
             variables.wanted_level += 1
         variables.sounds.append(Effect("bullet_hit"))
-        minus = variables.selected_gun.dmg
+        minus = variables.selected_gun.damage
         if variables.mayo_power:  # Double damage taken when player has mayo power
             minus *= 2
         if variables.beer_power:  # Triple damage taken when player has beer power

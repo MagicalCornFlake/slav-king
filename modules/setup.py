@@ -1,24 +1,12 @@
 """Settings loading, multi-instance program handling"""
 
+import configparser
 import os
-import subprocess
 import sys
 import tkinter
 import tkinter.messagebox
 
 tkinter.Tk().wm_withdraw()  # Hides root window
-
-key_index = {
-    "escape": 27,
-    "space": 32,
-    "left_shift": 1073742049,
-    "right_shift": 1073742053,
-    "left_control": 1073742048,
-    "right_control": 1073742052,
-    "left_alt": 1073742050,
-    "right_alt": 1073742054,
-}
-key_index.update({char: ord(char) for char in "abcdefghijklmnopqrstuvwxyz"})
 
 
 # Define custom message box called 'abort/retry/ignore' using Tknter's template
@@ -56,54 +44,39 @@ def ask_abort_retry_ignore(
     return str(res)
 
 
-def read_settings() -> dict[str, any]:
+def read_settings() -> configparser.ConfigParser:
     """Reads the user settings and returns them as a dictionary."""
+    config = configparser.ConfigParser()
+
     # Default settings options
-    settings = {
+    config["General"] = {
         "volume": 100,
         "muted": False,
-        "left_key": "a",
-        "right_key": "d",
-        "jump_key": "space",
-        "attack_key": "left_control",
-        "pause_key": "escape",
+    }
+    config["Keybindings"] = {
+        "left": "a",
+        "right": "d",
+        "jump": "space",
+        "attack": "left ctrl",
+        "pause": "escape",
+        "back": "escape",
+    }
+    config["Cheats"] = {
         "highscore": 0,
         "start_money": 120,
-        "showPlayerHitbox": False,
-        "showCopHitboxes": False,
     }
-    try:
-        with open("data/settings.txt", "r", encoding="UTF-8") as file:
-            # Reads the settings.txt file in which program settings are stored
-            data = file.readlines()
-    except FileNotFoundError:
-        data = []
-    for line in data:
-        line = line.rstrip()  # Removes trailing newlines from each line
-        # Splits each line into an 'item' and a 'value'
-        line = line.split("=", maxsplit=1)
-        # Removes whitespaces from each item
-        try:
-            key, value = [itm.strip() for itm in line if itm.strip()]
-            if value in ["True", "False"]:
-                settings[key] = value == "True"
-            else:
-                try:
-                    # Adds a dictionary entry for each item and integer value
-                    value = int(value)
-                except ValueError:
-                    # Adds a dictionary entry for each item and string value
-                    pass
-                settings[key] = value
-        except (IndexError, ValueError):
-            # Uses value of '0' if none specified in settings.txt
-            settings[key] = 0
-    return settings
+    config["Developer Options"] = {
+        "show_player_hitbox": False,
+        "show_cop_hitboxes": False,
+    }
+    config.read("data/settings.ini")
+    write_settings(config)
+    return config
 
 
 def ensure_singleton():
     """Checks if temporary file has already been made by previous instances."""
-    if os.path.exists("data/temp.txt"):
+    if os.path.exists("data/temp.lock"):
         msg = (
             "Either Slav King didn't close properly last time, or it is already running. Click "
             "'abort' or close any other instances of the game, then try again.\n Choosing 'ign"
@@ -111,32 +84,27 @@ def ensure_singleton():
         )
         dialog_reply = ask_abort_retry_ignore("Already running", msg)
         if dialog_reply == "retry":
-            # Uncomment below to launch restarted instances using pythonw.exe
-            # instead of python.exe (no console). Creates a new instance (restarts the program)
-            subprocess.call(["cmd.exe", "/c", "START", sys.executable, sys.argv[0]])
-            # Kills current instance
-            sys.exit()
+            # Restarts the program
+            os.execl(sys.executable, f'"{sys.executable}"', *sys.argv)
         elif dialog_reply == "abort":
             # Kills current instance
             sys.exit()
         elif dialog_reply == "ignore":
-            os.remove("data/temp.txt")
+            os.remove("data/temp.lock")
     # Creates temporary file to indicate the program is already running to future instances
-    with open("data/temp.txt", "w+", encoding="UTF-8") as file:
-        file.write("Slav King is running...")
+    with open("data/temp.lock", "w+", encoding="UTF-8") as file:
+        file.write("Slav King is running...\n")
 
 
-def finish(updated_settings: dict):
-    """Writes changed settings to settings.txt and removes the temp file."""
-    with open("data/settings.txt", "w", encoding="UTF-8") as data_file:
-        for key, value in updated_settings.items():
-            current_line = f"{key} = {value}\n"
-            data_file.write(current_line)
+def write_settings(settings: configparser.ConfigParser):
+    """Writes the game settings to disk."""
+    with open("data/settings.ini", "w", encoding="UTF-8") as data_file:
+        settings.write(data_file)
+
+
+def cleanup():
+    """Removes the temporary lockfile."""
     try:
-        os.remove("data/temp.txt")
+        os.remove("data/temp.lock")
     except FileNotFoundError:
         pass
-
-
-if __name__ == "__main__":
-    print(key_index)
