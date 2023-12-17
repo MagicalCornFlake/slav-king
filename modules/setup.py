@@ -1,4 +1,4 @@
-"""Code relating to setting up the game, """
+"""Settings loading, multi-instance program handling"""
 
 import os
 import subprocess
@@ -101,7 +101,7 @@ def read_settings() -> dict[str, any]:
     return settings
 
 
-def init():
+def ensure_singleton():
     """Checks if temporary file has already been made by previous instances."""
     if os.path.exists("data/temp.txt"):
         msg = (
@@ -124,7 +124,6 @@ def init():
     # Creates temporary file to indicate the program is already running to future instances
     with open("data/temp.txt", "w+", encoding="UTF-8") as file:
         file.write("Slav King is running...")
-    return read_settings()
 
 
 def finish(updated_settings: dict):
