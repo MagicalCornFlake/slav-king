@@ -1,7 +1,7 @@
 import pygame
 
 from modules.constants import SPRITE_DIR, WIN_WIDTH, WIN_HEIGHT
-from modules import variables
+from modules import variables, init
 
 
 # S L A V
@@ -9,9 +9,9 @@ class Player:
     walkRight = []
     walkLeft = []
     for i in range(1, 10):
-        walkRight.append(pygame.image.load(SPRITE_DIR + "R" + str(i) + ".png"))
+        walkRight.append(pygame.image.load(f"{SPRITE_DIR}R{i}.png"))
         walkRight[-1] = pygame.transform.scale(walkRight[-1], (256, 256))
-        walkLeft.append(pygame.image.load(SPRITE_DIR + "L" + str(i) + ".png"))
+        walkLeft.append(pygame.image.load(f"{SPRITE_DIR}L{i}.png"))
         walkLeft[-1] = pygame.transform.scale(walkLeft[-1], (256, 256))
 
     def __init__(self, x_pos, y_pos, width, height):
@@ -54,7 +54,7 @@ class Player:
         if settings["showPlayerHitbox"]:
             pygame.draw.rect(win, (0, 255, 0), self.hitbox, 2)
 
-    def hit(self, win, fonts, guns, purchasable_powerups):  # When killed
+    def hit(self, win, guns, purchasable_powerups):  # When killed
         # Stops all sound effects
         pygame.mixer.stop()
         # Resets all variables to start values
@@ -64,7 +64,7 @@ class Player:
         self.vel = 10
         self.walk_count = 0
         self.jump_count = 40
-        text = fonts["large_font"].render("BUSTED", 1, (255, 0, 0))
+        text = init.fonts["large_font"].render("BUSTED", 1, (255, 0, 0))
         win.blit(text, ((WIN_WIDTH // 2) - (text.get_width() // 2), 200))
         pygame.display.update()
         i = 0

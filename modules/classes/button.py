@@ -1,17 +1,15 @@
 import pygame
 
-from modules import variables
+from modules import variables, init
 from modules.constants import WIN_WIDTH, WIN_HEIGHT
 
 
 class Button:
     """Base class for the settings buttons."""
 
-    def __init__(
-        self, text: str, fonts, next_menu: str = None, on_click=None, selected=False
-    ):
+    def __init__(self, text: str, next_menu: str = None, on_click=None, selected=False):
         self.text_message = text
-        self.standard_font = fonts["standard_font"]
+        self.standard_font = init.fonts["standard_font"]
         self.text = self.standard_font.render(text, 1, (0, 0, 0))
         self.dimensions = None
         self.selected = selected
@@ -83,8 +81,8 @@ class Button:
 
 # SLIDER CODE
 class Slider(Button):
-    def __init__(self, text, fonts):
-        super().__init__(text, fonts)
+    def __init__(self, text):
+        super().__init__(text)
         self.label_text = text
         self.text = None
         self.slider_dimensions = None

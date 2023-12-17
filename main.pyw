@@ -59,7 +59,7 @@ def move(distance):
 
 
 def fire():
-    variables.sounds.append(Effect("bullet_fire_" + variables.selected_gun.name))
+    variables.sounds.append(Effect(f"bullet_fire_{variables.selected_gun.name}"))
     if variables.shot_cooldown_time_passed >= variables.shot_cooldown:
         # Makes the script wait a certain amount of time before a gun is able to fire again (rof = Rate of Fire)
         rate_of_fire = variables.selected_gun.rof / 60  # rounds per second
@@ -102,14 +102,12 @@ def redraw_game_window(cop_hovering_over):
         drop.draw(win, sprites)
     for bullet in variables.bullets:
         bullet.draw(win)
-    score_text = fonts["bold_font"].render(
-        "score: " + str(variables.score), 1, [255] * 3
-    )
+    score_text = fonts["bold_font"].render(f"score: {variables.score}", 1, [255] * 3)
     highscore_text = fonts["bold_font"].render(
-        "highscore: " + str(settings["highscore"]), 1, [255] * 3
+        f"highscore: {settings['highscore']}", 1, [255] * 3
     )
     fps_counter_text = fonts["bold_font"].render(
-        str(round(variables.fps)) + " FPS",
+        f"{variables.fps:.1f} FPS",
         1,
         (255 - round(variables.fps / 27 * 255), round(variables.fps / 27 * 255), 0),
     )
@@ -117,11 +115,9 @@ def redraw_game_window(cop_hovering_over):
         ammo_count_text = fonts["bold_font"].render("ammo: infinite", 1, [255] * 3)
     else:
         ammo_count_text = fonts["bold_font"].render(
-            "ammo: " + str(variables.ammo_count), 1, [255] * 3
+            f"ammo: {variables.ammo_count}", 1, [255] * 3
         )
-    money_count_text = fonts["bold_font"].render(
-        "money: $" + str(money_count), 1, [255] * 3
-    )
+    money_count_text = fonts["bold_font"].render(f"money: ${money_count}", 1, [255] * 3)
     paused_text = fonts["big_font"].render("PAUSED", 1, [255] * 3)
     paused_text_outline = fonts["big_outline_font"].render("PAUSED", 1, (0, 0, 0))
     quit_text = fonts["big_font"].render("Are you sure you want to quit?", 1, [255] * 3)
@@ -176,7 +172,7 @@ def redraw_game_window(cop_hovering_over):
     win.blit(ammo_count_text, (20, 10))
     win.blit(money_count_text, (20, 30))
     for powerup_shop_icon in powerups:
-        powerup_shop_icon.draw(win, sprites, purchasable_powerups)
+        powerup_shop_icon.draw(win, purchasable_powerups)
     pygame.display.update()
 
 
@@ -212,25 +208,21 @@ def quit_game():
     variables.run = False
 
 
-button_resume = Button("resume [ESC]", fonts, on_click=unpause)
-button_options = Button("options...", fonts, next_menu="options")
-button_quit = Button("quit", fonts, next_menu="quit")
-button_volume = Button("music options...", fonts, next_menu="volume")
-button_options_dev = Button("developer options...", fonts, next_menu="dev")
-button_back = Button("back... [ESC]", fonts, next_menu="main")
-slider_volume = Slider("volume: {vol}", fonts)
+button_resume = Button("resume [ESC]", on_click=unpause)
+button_options = Button("options...", next_menu="options")
+button_quit = Button("quit", next_menu="quit")
+button_volume = Button("music options...", next_menu="volume")
+button_options_dev = Button("developer options...", next_menu="dev")
+button_back = Button("back... [ESC]", next_menu="main")
+slider_volume = Slider("volume: {vol}")
 button_mute_music = Button(
-    "mute background music", fonts, on_click=toggle_mute, selected=settings["muted"]
+    "mute background music", on_click=toggle_mute, selected=settings["muted"]
 )
-button_back_volume = Button("back... [ESC]", fonts, next_menu="options")
-button_toggle_slav_hitbox = Button(
-    "toggle player hitbox", fonts, on_click=toggle_slav_hitbox
-)
-button_toggle_cop_hitbox = Button(
-    "toggle enemy hitboxes", fonts, on_click=toggle_cop_hitbox
-)
-button_no = Button("no", fonts, next_menu="main")
-button_yes = Button("yes", fonts, on_click=quit_game)
+button_back_volume = Button("back... [ESC]", next_menu="options")
+button_toggle_slav_hitbox = Button("toggle player hitbox", on_click=toggle_slav_hitbox)
+button_toggle_cop_hitbox = Button("toggle enemy hitboxes", on_click=toggle_cop_hitbox)
+button_no = Button("no", next_menu="main")
+button_yes = Button("yes", on_click=quit_game)
 
 buttons = {
     "main": [button_resume, button_options, button_quit],
@@ -244,7 +236,6 @@ buttons = {
 gun_beretta = Weapon(
     (16, WIN_HEIGHT // 8),
     name="Beretta",
-    fonts=fonts,
     cost=50,
     dmg=20,
     rof=1000,
@@ -254,7 +245,6 @@ gun_beretta = Weapon(
 gun_deagle = Weapon(
     (32, WIN_HEIGHT // 2),
     name="Deagle",
-    fonts=fonts,
     cost=150,
     dmg=60,
     rof=200,
@@ -264,7 +254,6 @@ gun_deagle = Weapon(
 gun_mp5 = Weapon(
     (WIN_WIDTH // 2 - 128, WIN_HEIGHT // 2),
     name="MP5",
-    fonts=fonts,
     cost=200,
     dmg=30,
     rof=750,
@@ -274,7 +263,6 @@ gun_mp5 = Weapon(
 gun_ak47 = Weapon(
     (WIN_WIDTH - 256 - 32, WIN_HEIGHT // 2),
     name="AK-47",
-    fonts=fonts,
     cost=300,
     dmg=50,
     rof=630,
@@ -289,22 +277,22 @@ guns = [
 ]
 
 purchasable_light_ammo = AmmoPurchasable(
-    WIN_WIDTH - 16 - 176, WIN_HEIGHT // 8, fonts, money_count, cost=75
+    WIN_WIDTH - 16 - 176, WIN_HEIGHT // 8, money_count, cost=75
 )
 purchasable_heavy_ammo = AmmoPurchasable(
-    WIN_WIDTH - 16 - 176, WIN_HEIGHT // 8, fonts, money_count, cost=100
+    WIN_WIDTH - 16 - 176, WIN_HEIGHT // 8, money_count, cost=100
 )
 
 purchasable_powerup_mayo = AbilityPurchasable(
-    16 * 2 + 256, WIN_HEIGHT // 8, fonts, money_count, name="mayo", cost=50
+    16 * 2 + 256, WIN_HEIGHT // 8, money_count, name="mayo", cost=50
 )
 purchasable_powerup_beer = AbilityPurchasable(
-    16 * 3 + 256 + 224, WIN_HEIGHT // 8, fonts, money_count, name="beer", cost=100
+    16 * 3 + 256 + 224, WIN_HEIGHT // 8, money_count, name="beer", cost=100
 )
 purchasable_powerups = [purchasable_powerup_mayo, purchasable_powerup_beer]
 
-powerup_mayo = Ability(20, 75, fonts, "mayo")
-powerup_beer = Ability(20, 75 + 100, fonts, "beer")
+powerup_mayo = Ability(20, 75, "mayo")
+powerup_beer = Ability(20, 75 + 100, "beer")
 powerups = [powerup_mayo, powerup_beer]
 
 
@@ -607,7 +595,7 @@ while variables.run:
                     and cop.touching_hitbox(slav.hitbox)
                     and 29 >= cop.walk_count >= 24
                 ):
-                    slav.hit(win, fonts, guns, purchasable_powerups)
+                    slav.hit(win, guns, purchasable_powerups)
                     for powerup_icon in powerups:
                         powerup_icon.progress = 0
                     variables.firing = False
@@ -639,9 +627,7 @@ while variables.run:
                     else:
                         # Plays random coin pickup sound
                         effect_number = random.randint(1, 10)
-                        variables.sounds.append(
-                            Effect("money_pickup" + str(effect_number))
-                        )
+                        variables.sounds.append(Effect(f"money_pickup{effect_number}"))
                         money_count += loot_drop.pickup_amount
                         # Updates consumable affordability after picking up money
                         for gun_icon in guns:

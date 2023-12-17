@@ -8,9 +8,12 @@ from modules.constants import WIN_WIDTH, WIN_HEIGHT, IMAGE_DIR
 pygame.mixer.pre_init(44100, -16, 2, 1024)
 pygame.mixer.init()
 pygame.init()
-    
-def init_window():
 
+sprites = {}
+fonts = {}
+
+
+def init_window():
     win = pygame.display.set_mode(
         (WIN_WIDTH, WIN_HEIGHT), pygame.SRCALPHA
     )  # and pygame.RESIZABLE)
@@ -58,33 +61,39 @@ def init_sprites():
     star_0 = pygame.transform.scale(star_0, (32, 32))
     star_1 = pygame.transform.scale(star_1, (32, 32))
 
-    return {
-        "bg": bg,
-        "bg_store": bg_store,
-        "bg_pause": bg_pause,
-        "bullet_stack": bullet_stack,
-        "coin_stack": coin_stack,
-        "mayo_jar": mayo_jar,
-        "mayo_jar_bw": mayo_jar_bw,
-        "beer_bottle": beer_bottle,
-        "beer_bottle_bw": beer_bottle_bw,
-        "store_icon": store_icon,
-        "mouse_icon": mouse_icon,
-        "back": back,
-        "star_0": star_0,
-        "star_1": star_1,
-    }
+    sprites.update(
+        {
+            "bg": bg,
+            "bg_store": bg_store,
+            "bg_pause": bg_pause,
+            "bullet_stack": bullet_stack,
+            "coin_stack": coin_stack,
+            "mayo_jar": mayo_jar,
+            "mayo_jar_bw": mayo_jar_bw,
+            "beer_bottle": beer_bottle,
+            "beer_bottle_bw": beer_bottle_bw,
+            "store_icon": store_icon,
+            "mouse_icon": mouse_icon,
+            "back": back,
+            "star_0": star_0,
+            "star_1": star_1,
+        }
+    )
+    return sprites
 
 
 def init_fonts():
     # Fonts used
-    return {
-        "standard_font": pygame.font.SysFont("comicsans", 18, False),
-        "bold_font": pygame.font.SysFont("comicsans", 18, True),
-        "big_font": pygame.font.SysFont("comicsans", 45, True),
-        "big_outline_font": pygame.font.SysFont("comicsans", 49, True),
-        "large_font": pygame.font.SysFont("comicsans", 100, False),
-    }
+    fonts.update(
+        {
+            "standard_font": pygame.font.SysFont("comicsans", 18, False),
+            "bold_font": pygame.font.SysFont("comicsans", 18, True),
+            "big_font": pygame.font.SysFont("comicsans", 45, True),
+            "big_outline_font": pygame.font.SysFont("comicsans", 49, True),
+            "large_font": pygame.font.SysFont("comicsans", 100, False),
+        }
+    )
+    return fonts
 
 
 def init_joysticks():

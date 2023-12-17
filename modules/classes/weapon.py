@@ -1,24 +1,24 @@
 import pygame
 
 
-from modules import variables
+from modules import variables, init
 from modules.constants import IMAGE_DIR
 
 
 class Weapon:
     """Base class for the weapon object."""
 
-    def __init__(self, pos, name, fonts, cost, dmg, rof, full_auto, money_count):
+    def __init__(self, pos, name, cost, dmg, rof, full_auto, money_count):
         self.x_pos, self.y_pos = pos
         self.name = name
-        image_path = IMAGE_DIR + "gun_" + name.lower() + ".png"
+        image_path = IMAGE_DIR + f"gun_{name.lower()}.png"
         self.img = pygame.image.load(image_path)
         self.cost = cost
         self.dmg = dmg  # damage
         self.rof = rof  # rate of fire
         self.full_auto = full_auto  # if fully automatic fire is permitted
-        self.bold_font = fonts["bold_font"]
-        self.text = self.bold_font.render(name + " - $" + str(cost), 1, [255] * 3)
+        self.bold_font = init.fonts["bold_font"]
+        self.text = self.bold_font.render(f"{name} - ${cost}", 1, [255] * 3)
         self.affordable = money_count >= self.cost
         self.flash_sequence = -1
         self.outer_hitbox = [self.x_pos, self.y_pos, 256, 164]
@@ -59,7 +59,7 @@ class Weapon:
             self.text = self.bold_font.render(self.name + " [OWNED]", 1, [255] * 3)
         else:
             self.text = self.bold_font.render(
-                self.name + " - $" + str(self.cost), 1, [255] * 3
+                f"{self.name} - ${self.cost}", 1, [255] * 3
             )
         self.text_position = [
             self.x_pos + 256 // 2 - self.text.get_width() // 2,

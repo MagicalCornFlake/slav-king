@@ -1,15 +1,15 @@
 import pygame
-from modules import variables
+from modules import variables,  init
 
 
 class Ability:
     """Base class for the in-game abilities."""
 
-    def __init__(self, x_pos, y_pos, fonts, name):
+    def __init__(self, x_pos, y_pos, name):
         self.text_x = x_pos
         self.y_pos = y_pos
         self.name = name
-        self.bold_font = fonts["bold_font"]
+        self.bold_font = init.fonts["bold_font"]
         self.text = self.bold_font.render(name, 1, [255] * 3)
         self.owned_text = self.bold_font.render("0", 1, [255] * 3)
         self.owned = 0
@@ -35,7 +35,7 @@ class Ability:
             self.bar_dimensions[3] - (self.progress - 40) // 5,
         ]
 
-    def draw(self, win, sprites, purchasable_powerups):
+    def draw(self, win, purchasable_powerups):
         """Render the ability icons on the in-game sidebar."""
         if variables.paused and variables.pause_menu == "shop":
             return
@@ -54,16 +54,16 @@ class Ability:
             self.text = self.bold_font.render(self.name, 1, [255] * 3)
             self.owned_text = self.bold_font.render(str(self.owned), 1, [255] * 3)
             win.blit(
-                sprites["mayo_jar"] if self.name == "mayo" else sprites["beer_bottle"],
+                init.sprites["mayo_jar"] if self.name == "mayo" else init.sprites["beer_bottle"],
                 (self.x_pos, self.y_pos),
             )
         else:
             self.text = self.bold_font.render(self.name, 1, (128, 128, 128))
             self.owned_text = self.bold_font.render("0", 1, (128, 128, 128))
             win.blit(
-                sprites["mayo_jar_bw"]
+                init.sprites["mayo_jar_bw"]
                 if self.name == "mayo"
-                else sprites["beer_bottle_bw"],
+                else init.sprites["beer_bottle_bw"],
                 (self.x_pos, self.y_pos),
             )
         win.blit(self.text, (self.text_x, self.y_pos + 58))

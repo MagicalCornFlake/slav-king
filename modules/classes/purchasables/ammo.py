@@ -1,20 +1,20 @@
 import pygame
 
 from modules.constants import IMAGE_DIR
-from modules import variables
+from modules import variables, init
 
 
 class AmmoPurchasable:
     """Base class for the ammo purchasable sprites in the shop."""
 
-    def __init__(self, x_pos, y_pos, fonts, money_count, cost):
+    def __init__(self, x_pos, y_pos, money_count, cost):
         self.x_pos = x_pos
         self.y_pos = y_pos
         self.img = pygame.image.load(IMAGE_DIR + "icon_bullets.png")
         self.img = pygame.transform.scale(self.img, (96, 96))
         self.cost = cost
-        self.bold_font = fonts["bold_font"]
-        self.text = self.bold_font.render("15x - $" + str(cost), 1, [255] * 3)
+        self.bold_font = init.fonts["bold_font"]
+        self.text = self.bold_font.render("15x - ${cost}", 1, [255] * 3)
         self.owned_text = self.bold_font.render(str(variables.ammo_count), 1, [255] * 3)
         self.affordable = money_count >= self.cost
         self.flash_sequence = -1

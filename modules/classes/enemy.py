@@ -12,9 +12,9 @@ class Enemy:
     walkRight = []
     walkLeft = []
     for i in range(1, 12):
-        walkRight.append(pygame.image.load(SPRITE_DIR + "ER" + str(i) + ".png"))
+        walkRight.append(pygame.image.load(f"{SPRITE_DIR}ER{i}.png"))
         walkRight[-1] = pygame.transform.scale(walkRight[-1], (256, 256))
-        walkLeft.append(pygame.image.load(SPRITE_DIR + "EL" + str(i) + ".png"))
+        walkLeft.append(pygame.image.load(f"{SPRITE_DIR}EL{i}.png"))
         walkLeft[-1] = pygame.transform.scale(walkLeft[-1], (256, 256))
 
     def __init__(self, x_pos, y_pos, width, height):
@@ -88,7 +88,7 @@ class Enemy:
             if variables.wanted_level < 5:
                 variables.wanted_level += 1
             variables.cop_amount += 1
-            random_death_sound = "die" + str(random.randint(1, 3))
+            random_death_sound = f"die{random.randint(1, 3)}"
             variables.sounds.append(Effect(random_death_sound))
             self.health = 0
             for loot_type in ("ammo", "money"):
