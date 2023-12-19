@@ -69,6 +69,7 @@ def read_settings() -> configparser.ConfigParser:
     config["Developer Options"] = {
         "show_player_hitbox": False,
         "show_cop_hitboxes": False,
+        "draw_experimental_player_weapon": False,
     }
     config.read("data/settings.ini")
     write_settings(config)

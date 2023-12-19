@@ -11,15 +11,17 @@ FRAME_HEIGHT = 9 * 16
 WHITE = [255] * 3
 
 
-def get_scaled_image_dimensions(image_path: str):
+def get_scaled_image_dimensions(
+    image_path: str,
+    max_width: int = FRAME_WIDTH - 16 * 3,
+    max_height: int = FRAME_HEIGHT - 9 * 3,
+):
     """Scales the image appropriately to the frame."""
     image = pygame.image.load(image_path)
     image_width = image.get_width()
     image_height = image.get_height()
     aspect_ratio = image_height / image_width
-    max_width = FRAME_WIDTH - 16 * 3
-    max_height = FRAME_HEIGHT - 9 * 3
-    if image_width >= FRAME_WIDTH:
+    if image_width >= max_width:
         dimensions = (max_width, aspect_ratio * max_width)
     else:
         dimensions = (max_height / aspect_ratio, max_height)
@@ -44,8 +46,8 @@ class Weapon(ShopItem):
     ):
         super().__init__(pos, name, cost)
         self.all.append(self)
-        image_path = IMAGE_DIR + f"gun_{name.lower()}.png"
-        self.image, (width, height) = get_scaled_image_dimensions(image_path)
+        self.image_path = IMAGE_DIR + f"gun_{name.lower()}.png"
+        self.image, (width, height) = get_scaled_image_dimensions(self.image_path)
         self.damage = damage
         self.rof = rof  # rate of fire
         self.full_auto = full_auto  # if fully automatic fire is permitted

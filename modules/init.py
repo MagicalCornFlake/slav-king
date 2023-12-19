@@ -41,6 +41,8 @@ def init_sprites():
     bg_store = pygame.image.load(IMAGE_DIR + "bg_store.png")
     ammo_light = pygame.image.load(IMAGE_DIR + "icon_ammo_light.png")
     ammo_heavy = pygame.image.load(IMAGE_DIR + "icon_ammo_heavy.png")
+    bullet_light = pygame.image.load(IMAGE_DIR + "icon_bullet_light.png")
+    bullet_heavy = pygame.image.load(IMAGE_DIR + "icon_bullet_heavy.png")
     coin_stack = pygame.image.load(IMAGE_DIR + "icon_coins.png")
     mayo_jar = pygame.image.load(IMAGE_DIR + "icon_mayo.png")
     mayo_jar_bw = pygame.image.load(IMAGE_DIR + "icon_mayo_bw.png")
@@ -56,6 +58,8 @@ def init_sprites():
     bg = pygame.transform.scale(bg, (960, 540))
     ammo_light = pygame.transform.scale(ammo_light, (64, 64))
     ammo_heavy = pygame.transform.scale(ammo_heavy, (64, 64))
+    bullet_light = pygame.transform.scale(bullet_light, (6, 8))
+    bullet_heavy = pygame.transform.scale(bullet_heavy, (14, 8))
     coin_stack = pygame.transform.scale(coin_stack, (64, 64))
     mayo_jar = pygame.transform.scale(mayo_jar, (37, 58))
     mayo_jar_bw = pygame.transform.scale(mayo_jar_bw, (37, 58))
@@ -74,6 +78,8 @@ def init_sprites():
             "bg_pause": bg_pause,
             "ammo_light": ammo_light,
             "ammo_heavy": ammo_heavy,
+            "bullet_light": bullet_light,
+            "bullet_heavy": bullet_heavy,
             "coin_stack": coin_stack,
             "mayo_jar": mayo_jar,
             "mayo_jar_bw": mayo_jar_bw,

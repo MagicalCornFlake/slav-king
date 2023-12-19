@@ -63,8 +63,6 @@ def fire():
                 round(slav.x_pos + slav.width // 2),
                 round(slav.y_pos + slav.height // 2.5),
             ),
-            3,
-            (0, 0, 0),
             slav.direction,
         )
     )
@@ -84,11 +82,11 @@ def redraw_game_window(cop_hovering_over):
         cop_to_draw.draw(
             win, slav, settings.getboolean("Developer Options", "show_cop_hitboxes")
         )
-    slav.draw(win, settings.getboolean("Developer Options", "show_player_hitbox"))
     for drop in variables.drops:
         drop.draw(win, sprites)
     for bullet in variables.bullets:
         bullet.draw(win)
+    slav.draw(win, settings["Developer Options"])
     score_text = fonts["bold_font"].render(f"score: {variables.score}", 1, [255] * 3)
     highscore_text = fonts["bold_font"].render(
         f"highscore: {settings['Cheats']['highscore']}", 1, [255] * 3
@@ -169,9 +167,10 @@ def redraw_game_window(cop_hovering_over):
 
 
 # Calling classes
-slav = Player(128, WIN_HEIGHT - 100 - 256 + 64, 256, 256)
 init.init_pause_buttons(settings)
 init.init_weapons()
+
+slav = Player(128, WIN_HEIGHT - 100 - 256 + 64, 256, 256)
 
 AmmoPurchasable(
     (WIN_WIDTH - 16 - 176, WIN_HEIGHT // 8), "ammo_light", cost=25, owned=20, quantity=5
@@ -515,7 +514,7 @@ while variables.run:
         # If any bullet touches any cop
         for fired_bullet in variables.bullets:
             if 0 < fired_bullet.x_pos < WIN_WIDTH:
-                fired_bullet.x_pos += fired_bullet.velocity
+                fired_bullet.x_pos += fired_bullet.velocity * fired_bullet.direction
             else:
                 variables.bullets.remove(fired_bullet)
                 continue

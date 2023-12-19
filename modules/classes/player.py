@@ -1,10 +1,14 @@
+import configparser
 import pygame
 
 from modules.constants import WIN_WIDTH
 from modules import variables, init
 from modules.classes.human import Human, get_sprite_frames
 from modules.classes.purchasables.ability import AbilityPurchasable
-from modules.classes.purchasables.weapon import Weapon
+from modules.classes.purchasables.weapon import Weapon, get_scaled_image_dimensions
+
+
+MAX_DIMENSIONS = (16 * 4, 9 * 4)
 
 
 # S L A V
@@ -14,6 +18,10 @@ class Player(Human):
     def __init__(self, x_pos: int, y_pos: int, width: int, height: int):
         super().__init__(x_pos, y_pos, width, height, 0, 1)
         self.reset()
+        self.gun_sprites = {
+            gun.name: get_scaled_image_dimensions(gun.image_path, *MAX_DIMENSIONS)
+            for gun in Weapon.all
+        }
 
     def reset(self):
         """Resets all object properties to their initial state."""
@@ -25,7 +33,7 @@ class Player(Human):
         self.x_pos = self.original_x_pos
         self.y_pos = self.original_y_pos
 
-    def draw(self, win, show_player_hitbox):
+    def draw(self, win, dev_settings: configparser.SectionProxy):
         if not variables.paused:
             self.move()
         if self.animation_stage >= 17:
@@ -35,8 +43,23 @@ class Player(Human):
         if not variables.paused:
             self.animation_stage += self.velocity / 10
         win.blit(frames[frame_idx], (self.x_pos, self.y_pos))
-        if show_player_hitbox:
+        if dev_settings.getboolean("show_player_hitbox"):
             pygame.draw.rect(win, (0, 255, 0), self.hitbox, 2)
+        if variables.selected_gun is None or not dev_settings.getboolean(
+            "draw_experimental_player_weapon"
+        ):
+            return
+        gun_sprite, dimensions = self.gun_sprites[variables.selected_gun.name]
+        if self.direction == -1:
+            gun_sprite = pygame.transform.flip(gun_sprite, True, False)
+        gun_hitbox = [
+            self.hitbox[0]
+            + (self.hitbox[2] - dimensions[0]) // 2
+            + (dimensions[0] + 20) * self.direction,
+            self.hitbox[1] + 40,
+            *dimensions,
+        ]
+        win.blit(gun_sprite, gun_hitbox)
 
     def move(self):
         """Move all objects on the screen with the character's movement."""
