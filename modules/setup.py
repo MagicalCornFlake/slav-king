@@ -60,6 +60,7 @@ def read_settings() -> configparser.ConfigParser:
         "attack": "left ctrl",
         "pause": "escape",
         "back": "escape",
+        "open_shop": "p",
     }
     config["Cheats"] = {
         "highscore": 0,

@@ -2,54 +2,36 @@ import pygame
 import random
 
 from modules import variables
-from modules.constants import WIN_WIDTH, WIN_HEIGHT, SPRITE_DIR
+from modules.constants import WIN_WIDTH, WIN_HEIGHT, LOOT_TABLE
 from modules.classes.effect import Effect
 from modules.classes.loot_drop import LootDrop
+from modules.classes.human import Human, get_sprite_frames
 
 
 # P O L I C E
-class Enemy:
-    walkRight = []
-    walkLeft = []
-    for i in range(1, 12):
-        walkRight.append(pygame.image.load(f"{SPRITE_DIR}ER{i}.png"))
-        walkRight[-1] = pygame.transform.scale(walkRight[-1], (256, 256))
-        walkLeft.append(pygame.image.load(f"{SPRITE_DIR}EL{i}.png"))
-        walkLeft[-1] = pygame.transform.scale(walkLeft[-1], (256, 256))
+class Enemy(Human):
+    frames_right, frames_left = get_sprite_frames(11, "E")
 
-    def __init__(self, x_pos, y_pos, width, height):
-        self.x_pos = x_pos
-        self.y_pos = y_pos
-        self.width = width
-        self.height = height
-        self.path = [50, WIN_WIDTH - 50 - 64]
-        self.walk_count = 0
-        self.vel = -3
-        self.hitbox = [self.x_pos + 78, self.y_pos + 58, 100, 190]
+    def __init__(
+        self, x_pos: int, y_pos: int, width: int, height: int, weapon_range: int
+    ):
+        super().__init__(x_pos, y_pos, width, height, 0, -1)
+        self.weapon_range = weapon_range
         self.health = 100
         self.sprite_area = [self.x_pos, self.y_pos, 256, 256]
 
     def draw(self, win, slav, show_cop_hitboxes):
         if not variables.paused:
             self.move(slav)
-        # If within 50px of player and currently in 'attack' animation
-        if abs(self.x_pos - slav.x_pos) > 50 and self.walk_count >= 24:
-            self.walk_count = 0
-        elif self.walk_count >= 32:
-            self.walk_count = 0
+        if (
+            self.animation_stage >= 24 and not self.within_range_of(slav)
+        ) or self.animation_stage > 32:
+            self.animation_stage = 0
 
-        if self.vel > 0:
-            win.blit(self.walkRight[self.walk_count // 3], (self.x_pos, self.y_pos))
-            if not variables.paused:
-                self.walk_count += 1
-        elif self.vel < 0:
-            win.blit(self.walkLeft[self.walk_count // 3], (self.x_pos, self.y_pos))
-            if not variables.paused:
-                self.walk_count += 1
-        else:
-            self.walk_count = 20
-            win.blit(self.walkLeft[self.walk_count // 3], (self.x_pos, self.y_pos))
-        self.hitbox = [self.x_pos + 78, self.y_pos + 58, 100, 190]
+        frames = self.frames_right if self.direction == 1 else self.frames_left
+        win.blit(frames[self.animation_stage // 3], (self.x_pos, self.y_pos))
+        if self.velocity != 0 and not variables.paused:
+            self.animation_stage += 1
         # Drawing health bar
         pygame.draw.rect(
             win, (255, 0, 0), (self.hitbox[0], self.hitbox[1] - 35, 100, 20)
@@ -62,21 +44,25 @@ class Enemy:
             pygame.draw.rect(win, (255, 0, 0), self.hitbox, 2)
             pygame.draw.rect(win, (0, 0, 255), self.sprite_area, 2)
 
-    def move(self, slav):
+    def within_range_of(self, target: Human):
+        distance = abs(self.x_pos - target.x_pos)
+        return distance <= self.weapon_range
+
+    def move(self, target: Human):
         if variables.wanted_level == 0:
-            self.vel = 0
-        elif self.walk_count <= 24:
-            if slav.x_pos > self.x_pos:
-                self.vel = 3
-                self.x_pos += self.vel
-            else:
-                self.vel = -3
-                self.x_pos += self.vel
+            self.velocity = 0
+            self.animation_stage = 18
+        else:
+            self.velocity = 3
+            self.direction = 1 if target.x_pos > self.x_pos else -1
+        if self.animation_stage > 24:
+            return
+        self.x_pos += self.velocity * self.direction
 
     def hit(self):  # When shot by bullet
         if variables.wanted_level == 0:
             variables.wanted_level += 1
-        variables.sounds.append(Effect("bullet_hit"))
+        Effect("bullet_hit")
         minus = variables.selected_gun.damage
         if variables.mayo_power:  # Double damage taken when player has mayo power
             minus *= 2
@@ -89,25 +75,28 @@ class Enemy:
                 variables.wanted_level += 1
             variables.cop_amount += 1
             random_death_sound = f"die{random.randint(1, 3)}"
-            variables.sounds.append(Effect(random_death_sound))
+            Effect(random_death_sound)
             self.health = 0
-            for loot_type in ("ammo", "money"):
-                variance = random.randint(3, 5)
+            for loot_type in ("ammo_light", "ammo_heavy", "money"):
+                seed = random.randint(1, 3)
+                position_variance = seed + 2
                 random_x = (
                     random.randint(
-                        self.x_pos - 10 * variance, self.x_pos + 10 * variance
+                        self.x_pos - 10 * position_variance,
+                        self.x_pos + 10 * position_variance,
                     )
                     + 128
                 )
                 random_y = (
                     random.randint(
-                        self.y_pos - 10 * variance, self.y_pos + 10 * variance
+                        self.y_pos - 10 * position_variance,
+                        self.y_pos + 10 * position_variance,
                     )
                     + 128
                 )
-                if random.randint(1, 3) > 1:
+                if random.randint(1, 5) <= LOOT_TABLE[loot_type]["drop_chance"]:
                     variables.drops.append(
-                        LootDrop((random_x, random_y), variance, loot_type)
+                        LootDrop((random_x, random_y), seed, loot_type)
                     )
             variables.cops.remove(self)
             # Deletes the oldest created loot drop if there are more than ten
@@ -118,16 +107,6 @@ class Enemy:
         self.health = 100
         self.x_pos = WIN_WIDTH
         self.y_pos = WIN_HEIGHT - 93
-
-    def touching_hitbox(self, hitbox: list[int, int, int, int]) -> bool:
-        nw_corner = (hitbox[0], hitbox[1])
-        ne_corner = (hitbox[0] + hitbox[2], hitbox[1])
-        sw_corner = (hitbox[0], hitbox[1] + hitbox[3])
-        se_corner = (hitbox[0] + hitbox[2], hitbox[1] + hitbox[3])
-        return True in [
-            self.touching_point(corner)
-            for corner in [nw_corner, ne_corner, sw_corner, se_corner]
-        ]
 
     def touching_point(self, point: tuple[int, int]) -> bool:
         return (

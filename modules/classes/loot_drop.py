@@ -1,6 +1,7 @@
 import pygame
 
 from modules import variables
+from modules.constants import LOOT_TABLE
 
 
 class LootDrop:
@@ -10,7 +11,7 @@ class LootDrop:
         self.x_pos, self.y_pos = pos
         self.loot_type = loot_type
         self.pickup_amount = (
-            3 * pickup_amount if loot_type == "money" else pickup_amount
+            LOOT_TABLE[loot_type]["pickup_amount_multiplier"] * pickup_amount
         )
         self.hitbox = [self.x_pos + 8, self.y_pos, 48, 65]
         self.animation_cycle = 0
@@ -33,12 +34,13 @@ class LootDrop:
         if not variables.paused:
             self.animation_cycle += self.animation_direction
 
-        sprite_name = "bullet_stack" if self.loot_type == "ammo" else "coin_stack"
+        sprite_name = "coin_stack" if self.loot_type == "money" else self.loot_type
         win.blit(
             sprites[sprite_name],
             (self.x_pos, self.y_pos),
         )
-        text_to_render = f"+{'$' * int(self.loot_type == 'money')}{self.pickup_amount}"
+        dollar_sign = "$" if self.loot_type == "money" else ""
+        text_to_render = f"+{dollar_sign}{self.pickup_amount}"
         self.text = self.current_font.render(text_to_render, True, [255] * 3)
 
         win.blit(self.text, self.text_position)

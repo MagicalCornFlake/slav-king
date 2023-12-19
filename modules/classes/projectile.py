@@ -9,7 +9,7 @@ class Projectile:
         self.radius: int = radius
         self.colour = colour
         self.facing: int = facing
-        self.vel: int = 32 * facing
+        self.velocity: int = 32 * facing
 
     def draw(self, win) -> None:
         """Renders the bullet in the game window."""

@@ -1,6 +1,6 @@
 # Game variables
 score = 0
-ammo_count = 20
+money_count = 0
 wanted_level = 0
 fps = 0
 shot_cooldown_time_passed = 0
@@ -18,9 +18,7 @@ selected_gun = None
 mayo_power = False
 beer_power = False
 slider_engaged = False
-cop_hovering_over = (False, ())
+cop_hovering_over = None
 cops = []
-sounds = []
 bullets = []
 drops = []
-purchasables = []

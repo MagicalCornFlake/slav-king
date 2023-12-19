@@ -8,29 +8,38 @@ from modules.constants import WIN_WIDTH, WIN_HEIGHT
 class Button:
     """Base class for the settings buttons."""
 
-    def __init__(self, text: str, next_menu: str = None, on_click=None, selected=False):
+    all: dict[str, list] = {"shop": []}
+
+    def __init__(
+        self,
+        text: str,
+        sections: str | list[str],
+        next_menu: str = None,
+        on_click=None,
+        selected=False,
+    ):
         self.text_message = text
         self.standard_font = init.fonts["standard_font"]
         self.text = self.standard_font.render(text, 1, (0, 0, 0))
-        self.dimensions = None
+        self.dimensions = []
         self.selected = selected
         if on_click is None:
             if next_menu is not None:
 
-                def callback():
+                def callback(*_):
                     variables.pause_menu = next_menu
 
                 self.on_click = callback
         else:
             self.on_click = on_click
+        if isinstance(sections, str):
+            sections = [sections]
+        for section in sections:
+            self.all.setdefault(section, [])
+            self.all[section].append(self)
 
-    def initialise_dimensions(self, buttons):
+    def initialise_dimensions(self, sibling_buttons: list):
         """Initialises the sprite dimensions."""
-        sibling_buttons = []
-        for btns in buttons.values():
-            if self in btns:
-                sibling_buttons = btns
-                break
         if len(sibling_buttons) == 2:
             # The index of the button is either 1 or 0, which means its x_centre is the window width * either 1/4 or 3/4
             x_centre = WIN_WIDTH * (1 + 2 * sibling_buttons.index(self)) // 4
@@ -52,16 +61,16 @@ class Button:
             # The width of the button is one half of the window's width
             # The height of the button is 50px
             self.dimensions = [
-                WIN_WIDTH // 2 - WIN_WIDTH // 4,
+                WIN_WIDTH // 4,
                 y_centre,
                 WIN_WIDTH // 2,
                 50,
             ]
 
-    def draw(self, win, buttons, bg_shade=None):
+    def draw(self, win, bg_shade=None):
         """Renders the button in the pause menu."""
         if self.dimensions is None:
-            self.initialise_dimensions(buttons)
+            self.initialise_dimensions()
         if bg_shade is None:
             bg_shade = 64 if self.selected else 128
         pygame.draw.rect(win, [bg_shade] * 3, self.dimensions)
@@ -77,31 +86,30 @@ class Button:
         """Click handler for the given button."""
         if not variables.paused:
             return
-        self.on_click()
+        self.on_click(self)
 
 
 # SLIDER CODE
 class Slider(Button):
-    def __init__(self, text):
-        super().__init__(text)
+    def __init__(self, text, sections: str | list[str]):
+        super().__init__(text, sections)
         self.label_text = text
         self.text = None
         self.slider_dimensions = None
 
-    def draw(
-        self, win, buttons, volume_settings: configparser.SectionProxy, bg_shade=32
-    ):
+    def draw(self, win, volume_settings: configparser.SectionProxy, bg_shade=32):
         if volume_settings.getboolean("muted"):
             volume = 0
             volume_text = "MUTED"
         else:
-            volume = volume_settings.getint("volume") / 100
-            volume_text = f"{volume_settings['volume']}%"
+            volume_percentage = volume_settings.getint("volume")
+            volume = volume_percentage / 100
+            volume_text = f"{volume_percentage}%"
         self.text = self.standard_font.render(
             self.label_text.format(vol=volume_text), 1, (0, 0, 0)
         )
 
-        super().draw(win, buttons, bg_shade)
+        super().draw(win, bg_shade)
 
         self.slider_dimensions = [
             self.dimensions[0] + int((self.dimensions[2] - 20) * volume),

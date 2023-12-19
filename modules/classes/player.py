@@ -1,76 +1,74 @@
 import pygame
 
-from modules.constants import SPRITE_DIR, WIN_WIDTH, WIN_HEIGHT
+from modules.constants import WIN_WIDTH
 from modules import variables, init
+from modules.classes.human import Human, get_sprite_frames
+from modules.classes.purchasables.ability import AbilityPurchasable
+from modules.classes.purchasables.weapon import Weapon
 
 
 # S L A V
-class Player:
-    walkRight = []
-    walkLeft = []
-    for i in range(1, 10):
-        walkRight.append(pygame.image.load(f"{SPRITE_DIR}R{i}.png"))
-        walkRight[-1] = pygame.transform.scale(walkRight[-1], (256, 256))
-        walkLeft.append(pygame.image.load(f"{SPRITE_DIR}L{i}.png"))
-        walkLeft[-1] = pygame.transform.scale(walkLeft[-1], (256, 256))
+class Player(Human):
+    frames_right, frames_left = get_sprite_frames(9)
 
-    def __init__(self, x_pos, y_pos, width, height):
-        self.x_pos = x_pos
-        self.y_pos = y_pos
-        self.width = width
-        self.height = height
-        self.vel = 10
+    def __init__(self, x_pos: int, y_pos: int, width: int, height: int):
+        super().__init__(x_pos, y_pos, width, height, 0, 1)
+        self.reset()
+
+    def reset(self):
+        """Resets all object properties to their initial state."""
+        self.velocity_multiplier = 1
         self.jumping = True
-        self.left = False
-        self.right = True
-        self.walk_count = 0
+        self.velocity = 0
+        self.animation_stage = 0
         self.jump_count = 40
-        self.standing = True
-        self.hitbox = [self.x_pos + 78, self.y_pos + 58, 100, 190]
+        self.x_pos = self.original_x_pos
+        self.y_pos = self.original_y_pos
 
     def draw(self, win, show_player_hitbox):
-        if self.walk_count >= 17:
-            self.walk_count = 0
-        if not self.standing:
-            if self.left:
-                win.blit(
-                    self.walkLeft[round(self.walk_count) // 2], (self.x_pos, self.y_pos)
-                )
-                if not variables.paused:
-                    self.walk_count += self.vel // 5 / 2
-            elif self.right:
-                win.blit(
-                    self.walkRight[round(self.walk_count) // 2],
-                    (self.x_pos, self.y_pos),
-                )
-                if not variables.paused:
-                    self.walk_count += self.vel // 5 / 2
-        else:
-            if self.right:
-                win.blit(self.walkRight[0], (self.x_pos, self.y_pos))
-            else:
-                win.blit(self.walkLeft[0], (self.x_pos, self.y_pos))
-        self.hitbox = [self.x_pos + 78, self.y_pos + 58, 100, 190]
+        if not variables.paused:
+            self.move()
+        if self.animation_stage >= 17:
+            self.animation_stage = 0
+        frames = self.frames_left if self.direction == -1 else self.frames_right
+        frame_idx = int(self.animation_stage / 2)
+        if not variables.paused:
+            self.animation_stage += self.velocity / 10
+        win.blit(frames[frame_idx], (self.x_pos, self.y_pos))
         if show_player_hitbox:
             pygame.draw.rect(win, (0, 255, 0), self.hitbox, 2)
 
-    def hit(self, win, guns, purchasable_powerups):  # When killed
+    def move(self):
+        """Move all objects on the screen with the character's movement."""
+        distance = self.velocity * self.direction * self.velocity_multiplier
+        if distance == 0:
+            return
+        if WIN_WIDTH // 3 > self.x_pos + distance > 80:
+            self.x_pos += distance
+            return
+        if variables.win_x > WIN_WIDTH:
+            variables.win_x = 0
+        if variables.win_x < -WIN_WIDTH:
+            variables.win_x = 0
+        variables.win_x -= distance
+        for cop_to_move in variables.cops:
+            cop_to_move.x_pos -= distance
+        for bullet in variables.bullets:
+            bullet.x_pos -= distance
+        for drop in variables.drops:
+            drop.x_pos -= distance
+
+    def hit(self, win):  # When killed
         # Stops all sound effects
         pygame.mixer.stop()
-        # Resets all variables to start values
-        self.jumping = True
-        self.x_pos = 128
-        self.y_pos = WIN_HEIGHT - 100 - 256 + 64
-        self.vel = 10
-        self.walk_count = 0
-        self.jump_count = 40
+        self.reset()
         text = init.fonts["large_font"].render("BUSTED", 1, (255, 0, 0))
         win.blit(text, ((WIN_WIDTH // 2) - (text.get_width() // 2), 200))
         pygame.display.update()
         i = 0
-        for gun in guns:
+        for gun in Weapon.all:
             gun.owned = False
-        for powerup in purchasable_powerups:
+        for powerup in AbilityPurchasable.all:
             powerup.owned = 0
         while i < 100:  # Waits 100 * 10ms (one second)
             pygame.time.delay(10)
@@ -81,3 +79,12 @@ class Player:
                     i = 100
                     variables.paused = True
                     variables.pause_menu = "quit"
+
+    def continue_jump(self):
+        if self.jump_count > -40:
+            self.y_pos -= self.jump_count
+            self.jump_count -= 8
+        else:
+            self.y_pos -= self.jump_count
+            self.jump_count = 40
+            self.jumping = False

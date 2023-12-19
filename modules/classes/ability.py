@@ -1,9 +1,13 @@
 import pygame
-from modules import variables,  init
+from modules import variables, init
+from modules.classes.abstract import Clickable
+from modules.classes.purchasables.ability import AbilityPurchasable
 
 
-class Ability:
+class Ability(Clickable):
     """Base class for the in-game abilities."""
+
+    all = []
 
     def __init__(self, x_pos, y_pos, name):
         self.text_x = x_pos
@@ -34,8 +38,9 @@ class Ability:
             self.bar_dimensions[2],
             self.bar_dimensions[3] - (self.progress - 40) // 5,
         ]
+        self.all.append(self)
 
-    def draw(self, win, purchasable_powerups):
+    def draw(self, win):
         """Render the ability icons on the in-game sidebar."""
         if variables.paused and variables.pause_menu == "shop":
             return
@@ -43,7 +48,7 @@ class Ability:
         for (
             powerup
         ) in (
-            purchasable_powerups
+            AbilityPurchasable.all
         ):  # Calculating how many powerups the user has purchased
             if powerup.name.startswith(self.name):
                 self.owned = powerup.owned
@@ -54,7 +59,9 @@ class Ability:
             self.text = self.bold_font.render(self.name, 1, [255] * 3)
             self.owned_text = self.bold_font.render(str(self.owned), 1, [255] * 3)
             win.blit(
-                init.sprites["mayo_jar"] if self.name == "mayo" else init.sprites["beer_bottle"],
+                init.sprites["mayo_jar"]
+                if self.name == "mayo"
+                else init.sprites["beer_bottle"],
                 (self.x_pos, self.y_pos),
             )
         else:
@@ -94,10 +101,10 @@ class Ability:
                 ]
             pygame.draw.rect(win, (204, 204, 0), self.bar_fill_dimensions)
 
-    def activate(self, slav, purchasable_powerups):
+    def activate(self, slav):
         """Enables the ability and starts its timer."""
         if self.progress == 0:
-            for powerup in purchasable_powerups:
+            for powerup in AbilityPurchasable.all:
                 if powerup.name.startswith(self.name):
                     powerup.owned -= 1
                     break
@@ -105,14 +112,14 @@ class Ability:
             self.progress += 1
             if self.name == "mayo":
                 variables.mayo_power = True
-                slav.vel = 20
+                slav.velocity_multiplier = 2
             elif self.name == "beer":
                 variables.beer_power = True
-                slav.vel = 5
+                slav.velocity_multiplier = 0.5
         else:
             self.progress = 0
             if self.name == "mayo":
                 variables.mayo_power = False
             elif self.name == "beer":
                 variables.beer_power = False
-            slav.vel = 10
+            slav.velocity_multiplier = 1
