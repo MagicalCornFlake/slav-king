@@ -1,8 +1,9 @@
 import configparser
+
 import pygame
 
-from modules.constants import WIN_WIDTH
 from modules import variables, init
+from modules.constants import WIN_WIDTH
 from modules.classes.human import Human, get_sprite_frames
 from modules.classes.purchasables.ability import AbilityPurchasable
 from modules.classes.purchasables.weapon import Weapon, get_scaled_image_dimensions

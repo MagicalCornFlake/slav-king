@@ -1,5 +1,6 @@
-import pygame
 import random
+
+import pygame
 
 from modules import variables
 from modules.constants import WIN_WIDTH, WIN_HEIGHT, LOOT_TABLE

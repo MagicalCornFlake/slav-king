@@ -1,8 +1,9 @@
 """Main module for Slav King."""
-import pygame
 import random
 
-from modules import setup, init
+import pygame
+
+from modules import setup, init, variables
 from modules.classes.ability import Ability
 from modules.classes.button import Button, Slider
 from modules.classes.effect import Effect
@@ -12,8 +13,13 @@ from modules.classes.projectile import Projectile
 from modules.classes.purchasables.weapon import Weapon
 from modules.classes.purchasables.ability import AbilityPurchasable
 from modules.classes.purchasables.ammo import AmmoPurchasable
-from modules.constants import WIN_WIDTH, WIN_HEIGHT, PAUSE_INSTRUCTIONS, AUDIO_DIR
-from modules import variables
+from modules.constants import (
+    WIN_WIDTH,
+    WIN_HEIGHT,
+    PAUSE_INSTRUCTIONS,
+    AUDIO_DIR,
+    STORE_ICON_PADDING,
+)
 
 try:
     from modules import win_tools as os_tools
@@ -145,7 +151,8 @@ def redraw_game_window(cop_hovering_over):
                 paused_text,
                 (WIN_WIDTH // 2 - paused_text.get_width() // 2, WIN_HEIGHT // 5),
             )
-            win.blit(sprites["store_icon"], (16, WIN_HEIGHT - 16 - 64))
+            store_icon = sprites["store_icon"]
+            win.blit(store_icon, (0, WIN_HEIGHT - 128))
     elif cop_hovering_over is not None:
         win.blit(sprites["mouse_icon"], cop_hovering_over)
     win.blit(score_text, (WIN_WIDTH - score_text.get_width() - 20, 10))
@@ -309,12 +316,8 @@ while variables.run:
             # If clicked mouse in pause menu
             if variables.paused:
                 for button in Button.all[variables.pause_menu]:
-                    dim = button.dimensions
                     # Check if the mouse is within the button's boundary
-                    if (
-                        dim[0] < mouse_pos[0] < dim[0] + dim[2]
-                        and dim[1] < mouse_pos[1] < dim[1] + dim[3]
-                    ):
+                    if button.is_hovered(mouse_pos):
                         if isinstance(button, Slider):
                             variables.slider_engaged = True
                             settings["General"]["muted"] = "False"
@@ -393,8 +396,10 @@ while variables.run:
 
             # If clicked shop icon
             elif (
-                16 < mouse_pos[0] < 16 + 64
-                and WIN_HEIGHT - 16 - 64 < mouse_pos[1] < WIN_HEIGHT - 16
+                STORE_ICON_PADDING <= mouse_pos[0] <= 128 - STORE_ICON_PADDING
+                and WIN_HEIGHT - STORE_ICON_PADDING - 128
+                < mouse_pos[1]
+                < WIN_HEIGHT - STORE_ICON_PADDING
             ):
                 # Enter shop
                 variables.previous_pause_menu = variables.pause_menu

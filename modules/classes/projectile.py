@@ -1,4 +1,5 @@
 import pygame
+
 from modules import init
 from modules.classes.purchasables.ammo import AmmoPurchasable
 

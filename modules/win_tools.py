@@ -1,7 +1,8 @@
 """Module containing Windows-specific functionality."""
 
-from pygame.joystick import Joystick
 from ctypes import windll, Structure, c_long, byref
+
+from pygame.joystick import Joystick
 
 
 class Point(Structure):
@@ -35,5 +36,3 @@ def set_cursor_pos(joystick: Joystick) -> None:
         return
     windll.user32.SetCursorPos(*new_mouse_pos)
     # ctypes.windll.user32.mouse_event(2, 0, 0, 0, 0)  # left down
-
-    

@@ -1,6 +1,5 @@
 import pygame
 
-
 from modules import variables, init
 from modules.classes.purchasables.shop_item import ShopItem
 from modules.constants import IMAGE_DIR

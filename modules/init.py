@@ -1,6 +1,7 @@
 """Initialisation code"""
 
 import configparser
+
 import pygame
 
 from modules import variables
@@ -65,7 +66,7 @@ def init_sprites():
     mayo_jar_bw = pygame.transform.scale(mayo_jar_bw, (37, 58))
     beer_bottle = pygame.transform.scale(beer_bottle, (20, 62))
     beer_bottle_bw = pygame.transform.scale(beer_bottle_bw, (20, 62))
-    store_icon = pygame.transform.scale(store_icon, (64, 64))
+    store_icon = pygame.transform.scale(store_icon, (128, 128))
     mouse_icon = pygame.transform.scale(mouse_icon, (64, 64))
     back = pygame.transform.scale(back, (128, 128))
     star_empty = pygame.transform.scale(star_empty, (48, 48))

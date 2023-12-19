@@ -1,11 +1,13 @@
 import configparser
+
 import pygame
 
 from modules import variables, init
 from modules.constants import WIN_WIDTH, WIN_HEIGHT
+from modules.classes.abstract import Clickable
 
 
-class Button:
+class Button(Clickable):
     """Base class for the settings buttons."""
 
     all: dict[str, list] = {"shop": []}

@@ -1,7 +1,7 @@
 import pygame
 
+from modules import init
 from modules.constants import IMAGE_DIR
-from modules import variables, init
 from modules.classes.purchasables.shop_item import ShopItem
 
 

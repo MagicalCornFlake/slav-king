@@ -1,4 +1,5 @@
 import pygame
+
 from modules import variables, init
 from modules.classes.abstract import Clickable
 from modules.classes.purchasables.ability import AbilityPurchasable
