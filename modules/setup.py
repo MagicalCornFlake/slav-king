@@ -61,8 +61,8 @@ def read_settings() -> configparser.ConfigParser:
     config["Keybindings"] = {
         "left": "a",
         "right": "d",
-        "jump": "space",
-        "attack": "left ctrl",
+        "jump": "w",
+        "attack": "space",
         "pause": "escape",
         "back": "escape",
         "open_shop": "p",
