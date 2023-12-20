@@ -1,4 +1,4 @@
-import configparser
+"""Class definition for the player character."""
 
 import pygame
 
@@ -11,18 +11,23 @@ from modules.classes.purchasables.weapon import Weapon, get_scaled_image_dimensi
 
 MAX_DIMENSIONS = (16 * 4, 9 * 4)
 
+GUN_SPRITES = {
+    gun.name: get_scaled_image_dimensions(gun.image_path, *MAX_DIMENSIONS)
+    for gun in Weapon.all
+}
+
 
 # S L A V
 class Player(Human):
+    """Player character class."""
+
     frames_right, frames_left = get_sprite_frames(9)
 
     def __init__(self, x_pos: int, y_pos: int, width: int, height: int):
         super().__init__(x_pos, y_pos, width, height, 0, 1)
+        self.jump_stage = 40
+        self.jumping = False
         self.reset()
-        self.gun_sprites = {
-            gun.name: get_scaled_image_dimensions(gun.image_path, *MAX_DIMENSIONS)
-            for gun in Weapon.all
-        }
 
     def reset(self):
         """Resets all object properties to their initial state."""
@@ -30,11 +35,13 @@ class Player(Human):
         self.jumping = True
         self.velocity = 0
         self.animation_stage = 0
-        self.jump_count = 40
+        self.jump_stage = 40
+        self.jumping = False
         self.x_pos = self.original_x_pos
         self.y_pos = self.original_y_pos
 
-    def draw(self, win, dev_settings: configparser.SectionProxy):
+    def draw(self, win):
+        """Renders the player character to the screen."""
         if not variables.paused:
             self.move()
         if self.animation_stage >= 17:
@@ -44,13 +51,14 @@ class Player(Human):
         if not variables.paused:
             self.animation_stage += self.velocity / 10
         win.blit(frames[frame_idx], (self.x_pos, self.y_pos))
+        dev_settings = variables.settings["Developer Options"]
         if dev_settings.getboolean("show_player_hitbox"):
             pygame.draw.rect(win, (0, 255, 0), self.hitbox, 2)
         if variables.selected_gun is None or not dev_settings.getboolean(
             "draw_experimental_player_weapon"
         ):
             return
-        gun_sprite, dimensions = self.gun_sprites[variables.selected_gun.name]
+        gun_sprite, dimensions = GUN_SPRITES[variables.selected_gun.name]
         if self.direction == -1:
             gun_sprite = pygame.transform.flip(gun_sprite, True, False)
         gun_hitbox = [
@@ -82,7 +90,8 @@ class Player(Human):
         for drop in variables.drops:
             drop.x_pos -= distance
 
-    def hit(self, win):  # When killed
+    def hit(self, win):
+        """Called when killed by cop."""
         # Stops all sound effects
         pygame.mixer.stop()
         self.reset()
@@ -105,10 +114,11 @@ class Player(Human):
                     variables.pause_menu = "quit"
 
     def continue_jump(self):
-        if self.jump_count > -40:
-            self.y_pos -= self.jump_count
-            self.jump_count -= 8
+        """Progresses to the next jump stage when in the process of jumping."""
+        if self.jump_stage > -40:
+            self.y_pos -= self.jump_stage
+            self.jump_stage -= 8
         else:
-            self.y_pos -= self.jump_count
-            self.jump_count = 40
+            self.y_pos -= self.jump_stage
+            self.jump_stage = 40
             self.jumping = False

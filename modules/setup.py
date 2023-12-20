@@ -3,8 +3,12 @@
 import configparser
 import os
 import sys
+
 import tkinter
 import tkinter.messagebox
+
+from modules import variables
+
 
 tkinter.Tk().wm_withdraw()  # Hides root window
 
@@ -73,8 +77,8 @@ def read_settings() -> configparser.ConfigParser:
         "draw_experimental_player_weapon": False,
     }
     config.read("data/settings.ini")
-    write_settings(config)
-    return config
+    variables.settings = config
+    write_settings()
 
 
 def ensure_singleton():
@@ -99,10 +103,10 @@ def ensure_singleton():
         file.write("Slav King is running...\n")
 
 
-def write_settings(settings: configparser.ConfigParser):
+def write_settings():
     """Writes the game settings to disk."""
     with open("data/settings.ini", "w", encoding="UTF-8") as data_file:
-        settings.write(data_file)
+        variables.settings.write(data_file)
 
 
 def cleanup():

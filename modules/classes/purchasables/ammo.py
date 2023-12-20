@@ -1,3 +1,5 @@
+"""Class definition for the ammunition types purchasable in the shop."""
+
 import pygame
 
 from modules import init
@@ -8,7 +10,7 @@ from modules.classes.purchasables.shop_item import ShopItem
 class AmmoPurchasable(ShopItem):
     """Base class for the ammo purchasable sprites in the shop."""
 
-    all = []
+    all: list["AmmoPurchasable"] = []
     selected_ammo_idx: None | int = None
 
     def __init__(
@@ -53,16 +55,16 @@ class AmmoPurchasable(ShopItem):
         win.blit(self.image, (self.hitbox[:2]))
         win.blit(self.text, self.text_position)
         win.blit(self.owned_text, self.owned_text_position)
-        # Uncomment below to show powerup sprite hitboxes in store
+        # Uncomment below to show powerup sprite hitboxes in shop
         # pygame.draw.rect(win, (255, 0, 0), self.hitbox, 1)
 
     def flash(self):
         """Perform the flash animation when the user cannot afford this ammo purchasable."""
         self.flash_sequence = 0
 
-    @classmethod
-    def get_selected(cls):
+    @staticmethod
+    def get_selected():
         """Convenience method to return the currently selected ammo type."""
-        if cls.selected_ammo_idx is None:
+        if AmmoPurchasable.selected_ammo_idx is None:
             return None
-        return cls.all[int(cls.selected_ammo_idx)]
+        return AmmoPurchasable.all[int(AmmoPurchasable.selected_ammo_idx)]

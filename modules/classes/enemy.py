@@ -1,3 +1,5 @@
+"""Class definition for the cop characters."""
+
 import random
 
 import pygame
@@ -9,11 +11,14 @@ from modules.classes.loot_drop import LootDrop
 from modules.classes.human import Human, get_sprite_frames
 
 
+FRAMES_RIGHT, FRAMES_LEFT = get_sprite_frames(11, "E")
+
+
 # P O L I C E
 class Enemy(Human):
     """Cop enemy class."""
 
-    frames_right, frames_left = get_sprite_frames(11, "E")
+    all: list["Enemy"] = []
 
     def __init__(
         self, x_pos: int, y_pos: int, width: int, height: int, weapon_range: int
@@ -22,8 +27,9 @@ class Enemy(Human):
         self.weapon_range = weapon_range
         self.health = 100
         self.sprite_area = [self.x_pos, self.y_pos, 256, 256]
+        self.all.append(self)
 
-    def draw(self, win, slav, show_cop_hitboxes):
+    def draw(self, win, slav):
         """Renders character to screen."""
         if not variables.paused:
             self.move(slav)
@@ -32,7 +38,7 @@ class Enemy(Human):
         ) or self.animation_stage > 32:
             self.animation_stage = 0
 
-        frames = self.frames_right if self.direction == 1 else self.frames_left
+        frames = FRAMES_RIGHT if self.direction == 1 else FRAMES_LEFT
         win.blit(frames[self.animation_stage // 3], (self.x_pos, self.y_pos))
         if self.velocity != 0 and not variables.paused:
             self.animation_stage += 1
@@ -44,7 +50,7 @@ class Enemy(Human):
             win, (0, 128, 0), (self.hitbox[0], self.hitbox[1] - 35, self.health, 20)
         )
         self.sprite_area = [self.x_pos, self.y_pos, 256, 256]
-        if show_cop_hitboxes:
+        if variables.settings.getboolean("Developer Options", "show_cop_hitboxes"):
             pygame.draw.rect(win, (255, 0, 0), self.hitbox, 2)
             pygame.draw.rect(win, (0, 0, 255), self.sprite_area, 2)
 
@@ -54,6 +60,7 @@ class Enemy(Human):
         return distance <= self.weapon_range
 
     def move(self, target: Human):
+        """Moves the cop towards the player if they are wanted."""
         if variables.wanted_level == 0:
             self.velocity = 0
             self.animation_stage = 18

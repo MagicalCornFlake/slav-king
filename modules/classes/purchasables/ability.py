@@ -8,7 +8,7 @@ from modules.classes.purchasables.shop_item import ShopItem
 class AbilityPurchasable(ShopItem):
     """Base class for the ability sprites in the shop."""
 
-    all = []
+    all: list["AbilityPurchasable"] = []
 
     def __init__(self, pos: tuple[int, int], name: str, cost: int):
         super().__init__(pos, name, cost)
@@ -28,6 +28,7 @@ class AbilityPurchasable(ShopItem):
         self.all.append(self)
 
     def get_scaled_image(self, image: pygame.Surface):
+        """Scales the given image such that the image fits within the shop item frame."""
         width = image.get_width()
         height = image.get_height()
         new_width = 116 / height * width
@@ -59,7 +60,7 @@ class AbilityPurchasable(ShopItem):
         win.blit(self.image, (self.hitbox[:2]))
         win.blit(self.text, self.text_position)
         win.blit(self.owned_text, self.owned_text_position)
-        # Uncomment below to show powerup sprite hitboxes in store
+        # Uncomment below to show powerup sprite hitboxes in shop
         # pygame.draw.rect(win, (255, 0, 0), self.hitbox, 1)
 
     def flash(self):

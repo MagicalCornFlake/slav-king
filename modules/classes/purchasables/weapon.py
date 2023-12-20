@@ -38,7 +38,7 @@ def get_scaled_image_dimensions(
 class Weapon(ShopItem):
     """Base class for the weapon object."""
 
-    all = []
+    all: list["Weapon"] = []
 
     def __init__(
         self,
@@ -104,7 +104,7 @@ class Weapon(ShopItem):
             pygame.draw.rect(win, WHITE, self.dimensions, 5)
         win.blit(self.image, (self.hitbox[:2]))
         win.blit(self.text, self.text_position)
-        # Uncomment below to show weapon sprite hitboxes in store
+        # Uncomment below to show weapon sprite hitboxes in shop
         # pygame.draw.rect(win, (255, 0, 0), self.dimensions, 1)
 
     def flash(self):

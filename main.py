@@ -28,7 +28,7 @@ except ImportError:
     from modules import posix_tools as os_tools
 
 setup.ensure_singleton()
-settings = setup.read_settings()
+setup.read_settings()
 win = init.init_window()
 sprites = init.init_sprites()
 fonts = init.init_fonts()
@@ -36,41 +36,40 @@ joysticks = init.init_joysticks()
 clock = pygame.time.Clock()  # To make calling the method quicker
 
 cop_spawn_delay = random.randint(500, 2500) / 1000
+select_button_held = False
+cop_hovering_over = None
 
 # Gets the volume from settings and converts it into decimal instead of percentage
 volume = (
     0
-    if settings.getboolean("General", "muted")
-    else settings.getint("General", "volume") / 100
+    if variables.settings.getboolean("General", "muted")
+    else variables.settings.getint("General", "volume") / 100
 )
 pygame.mixer.music.set_volume(volume)
 pygame.mixer.music.load(AUDIO_DIR + "music.mp3")
 pygame.mixer.music.play(-1)
 
-variables.money_count = settings.getint("Cheats", "start_money")
+variables.money_count = variables.settings.getint("Cheats", "start_money")
 
 
 # RENDER GAME GRAPHICS / SPRITES
-def redraw_game_window(cop_hovering_over):
+def redraw_game_window():
     """Renders the game's graphics to the window."""
     win.blit(sprites["bg"], (variables.win_x, 0))
     if variables.win_x > 0:
         win.blit(sprites["bg"], (variables.win_x - WIN_WIDTH, 0))
     elif variables.win_x < 0:
         win.blit(sprites["bg"], (variables.win_x + WIN_WIDTH, 0))
-
-    draw_cop_hitboxes = settings.getboolean("Developer Options", "show_cop_hitboxes")
     for cop_to_draw in variables.cops:
-        cop_to_draw.draw(win, slav, draw_cop_hitboxes)
+        cop_to_draw.draw(win, slav)
     for drop in variables.drops:
         drop.draw(win, sprites)
     for bullet in variables.bullets:
         bullet.draw(win)
-    slav.draw(win, settings["Developer Options"])
+    slav.draw(win)
     score_text = fonts["bold_font"].render(f"score: {variables.score}", 1, [255] * 3)
-    highscore_text = fonts["bold_font"].render(
-        f"highscore: {settings['Cheats']['highscore']}", 1, [255] * 3
-    )
+    highscore = variables.settings["Cheats"]["highscore"]
+    highscore_text = fonts["bold_font"].render(f"highscore: {highscore}", 1, [255] * 3)
     fps_byte = round(variables.fps / 27) * 255
     fps_colour = (255 - fps_byte, fps_byte, 0)
     fps_counter_text = fonts["bold_font"].render(
@@ -96,7 +95,7 @@ def redraw_game_window(cop_hovering_over):
         win.blit(sprites["bg_pause"], (0, 0))
         for button_in_menu in Button.all[variables.pause_menu]:
             if isinstance(button_in_menu, Slider):
-                button_in_menu.draw(win, settings["General"])
+                button_in_menu.draw(win)
             else:
                 button_in_menu.draw(win)
         if variables.pause_menu == "shop":
@@ -148,7 +147,7 @@ def redraw_game_window(cop_hovering_over):
 
 
 # Calling classes
-init.init_pause_buttons(settings)
+init.init_pause_buttons()
 init.init_weapons()
 
 slav = Player(128, WIN_HEIGHT - 100 - 256 + 64, 256, 256)
@@ -169,7 +168,7 @@ Ability(20, 75 + 100, "beer")
 
 def get_key_index(key_name: str) -> int:
     """Returns the integer index corresponding to the key binding name."""
-    return pygame.key.key_code(settings["Keybindings"][key_name])
+    return pygame.key.key_code(variables.settings["Keybindings"][key_name])
 
 
 def get_button_index(key_name: str) -> int:
@@ -184,10 +183,27 @@ def get_button_index(key_name: str) -> int:
 
 
 def update_selected_gun(gun: Weapon) -> None:
+    """Event handler when the player selects a different gun."""
     if variables.selected_gun != gun:
         Effect("weapon_charge")
     variables.selected_gun = gun
     AmmoPurchasable.selected_ammo_idx = gun.name in ["Deagle", "AK-47"]
+
+
+def handle_button_presses(mouse_pos: tuple[int, int]):
+    """Checks each button if it is hovered, and if so, activates it."""
+    for button in Button.all[variables.pause_menu]:
+        # Check if the mouse is within the button's boundary
+        if not button.is_hovered(mouse_pos):
+            continue
+        if isinstance(button, Slider):
+            variables.slider_engaged = True
+            variables.settings["General"]["muted"] = "False"
+            Button.all["volume"][1].selected = False
+        else:
+            variables.slider_engaged = False
+            button.do_action()  # Sends message that button was clicked
+        break
 
 
 # MAIN LOOP
@@ -220,6 +236,7 @@ while variables.run:
         return keys[get_key_index(key_name)]
 
     def go_back_in_pause_menu():
+        """Handles the pause menu change when the user presses the 'back' button."""
         variables.pause_menu = PAUSE_INSTRUCTIONS[variables.pause_menu]
         if variables.pause_menu == "unpause":
             variables.paused = False
@@ -228,6 +245,7 @@ while variables.run:
             variables.pause_menu = variables.previous_pause_menu
 
     def attempt_fire() -> None:
+        """Checks if it is possible to fire the weapon, and if so, calls the weapon fire method."""
         if (
             variables.shot_cooldown_time_passed >= variables.shot_cooldown
             and variables.selected_gun is not None
@@ -289,17 +307,7 @@ while variables.run:
         ):
             # If clicked mouse in pause menu
             if variables.paused:
-                for button in Button.all[variables.pause_menu]:
-                    # Check if the mouse is within the button's boundary
-                    if button.is_hovered(mouse_pos):
-                        if isinstance(button, Slider):
-                            variables.slider_engaged = True
-                            settings["General"]["muted"] = "False"
-                            Button.all["volume"][1].selected = False
-                        else:
-                            variables.slider_engaged = False
-                            button.do_action()  # Sends message that button was clicked
-                        break  # Not sure if this is needed but it can't do any harm
+                handle_button_presses(mouse_pos)
 
             # If clicked mouse in game
             else:
@@ -312,7 +320,7 @@ while variables.run:
                         powerup_consumable.activate(slav)
                         Effect("mayo")
                         Effect("eating")
-                if variables.cop_hovering_over is not None:
+                if cop_hovering_over is not None:
                     if variables.money_count >= 100:
                         variables.money_count -= 100
                         variables.wanted_level = 0
@@ -394,14 +402,21 @@ while variables.run:
         )
 
         # Changes the volume setting with a minimum of 0% and maximum of 100%
-        settings["General"]["volume"] = str(max(min(temp_volume, 100), 0))
-        pygame.mixer.music.set_volume(settings.getint("General", "volume") / 100)
+        variables.settings["General"]["volume"] = str(max(min(temp_volume, 100), 0))
+        pygame.mixer.music.set_volume(
+            variables.settings.getint("General", "volume") / 100
+        )
 
-    select_button_held = False
-    for joystick in joysticks:
-        if joystick.get_button(get_button_index("select")):
-            select_button_held = True
-        os_tools.set_cursor_pos(joystick)
+    def check_joysticks():
+        """Cycles through all connected joysticks and checks if any of them is held."""
+        _select_button_held = False
+        for joystick in joysticks:
+            if joystick.get_button(get_button_index("select")):
+                _select_button_held = True
+            os_tools.set_cursor_pos(joystick)
+        return _select_button_held
+
+    select_button_held = check_joysticks()
     # GAME LOGIC
     if not variables.paused:
         variables.shot_cooldown_time_passed += 1 / 27  # Seconds
@@ -432,12 +447,12 @@ while variables.run:
             if powerup_consumable.progress > 0:
                 powerup_consumable.activate(slav)
 
-        variables.cop_hovering_over = None
+        cop_hovering_over = None
         # If player touches any cop
         for cop in variables.cops:
             if variables.wanted_level > 0:
                 if cop.is_hovered(mouse_pos):
-                    variables.cop_hovering_over = mouse_pos
+                    cop_hovering_over = mouse_pos
                 if (
                     not GOD_MODE
                     and cop.within_range_of(slav)
@@ -451,7 +466,9 @@ while variables.run:
                     for powerup_consumable in Ability.all:
                         powerup_consumable.progress = 0
                     AmmoPurchasable.selected_ammo_idx = None
-                    variables.money_count = settings.getint("Cheats", "start_money")
+                    variables.money_count = variables.settings.getint(
+                        "Cheats", "start_money"
+                    )
                     variables.wanted_level = 0
                     variables.cops = []
                     variables.cop_amount = 1
@@ -459,7 +476,7 @@ while variables.run:
                     variables.drops = []
                     variables.selected_gun = None
                     variables.mayo_power = False
-                    variables.cop_hovering_over = None
+                    cop_hovering_over = None
         # If player touches ammo drop
         for loot_drop in variables.drops:
             if (
@@ -519,10 +536,10 @@ while variables.run:
         elif is_key_pressed("jump") or keys[pygame.K_UP]:
             slav.jumping = True
 
-        if variables.score > settings.getint("Cheats", "highscore"):
+        if variables.score > variables.settings.getint("Cheats", "highscore"):
             # Updates high score if user has surpassed it
-            settings["Cheats"]["highscore"] = str(variables.score)
-    redraw_game_window(variables.cop_hovering_over)
+            variables.settings["Cheats"]["highscore"] = str(variables.score)
+    redraw_game_window()
 pygame.quit()
-setup.write_settings(settings)
+setup.write_settings()
 setup.cleanup()

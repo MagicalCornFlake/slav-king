@@ -1,3 +1,7 @@
+"""Global game variable definitions."""
+
+from configparser import ConfigParser
+
 # Game variables
 score = 0
 money_count = 0
@@ -18,7 +22,8 @@ selected_gun = None
 mayo_power = False
 beer_power = False
 slider_engaged = False
-cop_hovering_over = None
 cops = []
 bullets = []
 drops = []
+
+settings: ConfigParser

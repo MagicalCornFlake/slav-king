@@ -1,7 +1,5 @@
 """Initialisation code"""
 
-import configparser
-
 import pygame
 
 from modules import variables
@@ -19,6 +17,7 @@ fonts: dict[str, pygame.font.Font] = {}
 
 
 def init_window():
+    """Initialises the game OS window."""
     win = pygame.display.set_mode(
         (WIN_WIDTH, WIN_HEIGHT), pygame.SRCALPHA
     )  # and pygame.RESIZABLE)
@@ -34,70 +33,52 @@ def init_window():
 
 
 def init_sprites():
-    bg_pause = pygame.Surface((WIN_WIDTH, WIN_HEIGHT))
-    bg_pause.fill((0, 0, 0))
-    bg_pause.set_alpha(192)
+    """Initialises the sprite graphics used within the game UI."""
+    sprites["bg_pause"] = pygame.Surface((WIN_WIDTH, WIN_HEIGHT))
+    sprites["bg_pause"].fill((0, 0, 0))
+    sprites["bg_pause"].set_alpha(192)
 
-    bg = pygame.image.load(IMAGE_DIR + "bg_main.png")
-    bg_store = pygame.image.load(IMAGE_DIR + "bg_store.png")
-    ammo_light = pygame.image.load(IMAGE_DIR + "icon_ammo_light.png")
-    ammo_heavy = pygame.image.load(IMAGE_DIR + "icon_ammo_heavy.png")
-    bullet_light = pygame.image.load(IMAGE_DIR + "icon_bullet_light.png")
-    bullet_heavy = pygame.image.load(IMAGE_DIR + "icon_bullet_heavy.png")
-    coin_stack = pygame.image.load(IMAGE_DIR + "icon_coins.png")
-    mayo_jar = pygame.image.load(IMAGE_DIR + "icon_mayo.png")
-    mayo_jar_bw = pygame.image.load(IMAGE_DIR + "icon_mayo_bw.png")
-    beer_bottle = pygame.image.load(IMAGE_DIR + "icon_beer.png")
-    beer_bottle_bw = pygame.image.load(IMAGE_DIR + "icon_beer_bw.png")
-    store_icon = pygame.image.load(IMAGE_DIR + "icon_store.png")
-    mouse_icon = pygame.image.load(IMAGE_DIR + "icon_mouse.png")
-    back = pygame.image.load(IMAGE_DIR + "icon_back.png")
-    star_empty = pygame.image.load(IMAGE_DIR + "star_empty.png")
-    star_filled = pygame.image.load(IMAGE_DIR + "star_filled.png")
+    sprites["bg"] = pygame.image.load(IMAGE_DIR + "bg_main.png")
+    sprites["bg_store"] = pygame.image.load(IMAGE_DIR + "bg_store.png")
+    sprites["ammo_light"] = pygame.image.load(IMAGE_DIR + "icon_ammo_light.png")
+    sprites["ammo_heavy"] = pygame.image.load(IMAGE_DIR + "icon_ammo_heavy.png")
+    sprites["bullet_light"] = pygame.image.load(IMAGE_DIR + "icon_bullet_light.png")
+    sprites["bullet_heavy"] = pygame.image.load(IMAGE_DIR + "icon_bullet_heavy.png")
+    sprites["coin_stack"] = pygame.image.load(IMAGE_DIR + "icon_coins.png")
+    sprites["mayo_jar"] = pygame.image.load(IMAGE_DIR + "icon_mayo.png")
+    sprites["mayo_jar_bw"] = pygame.image.load(IMAGE_DIR + "icon_mayo_bw.png")
+    sprites["beer_bottle"] = pygame.image.load(IMAGE_DIR + "icon_beer.png")
+    sprites["beer_bottle_bw"] = pygame.image.load(IMAGE_DIR + "icon_beer_bw.png")
+    sprites["store_icon"] = pygame.image.load(IMAGE_DIR + "icon_store.png")
+    sprites["mouse_icon"] = pygame.image.load(IMAGE_DIR + "icon_mouse.png")
+    sprites["back"] = pygame.image.load(IMAGE_DIR + "icon_back.png")
+    sprites["star_empty"] = pygame.image.load(IMAGE_DIR + "star_empty.png")
+    sprites["star_filled"] = pygame.image.load(IMAGE_DIR + "star_filled.png")
 
     # Scaling of resources
-    bg = pygame.transform.scale(bg, (960, 540))
-    ammo_light = pygame.transform.scale(ammo_light, (64, 64))
-    ammo_heavy = pygame.transform.scale(ammo_heavy, (64, 64))
-    bullet_light = pygame.transform.scale(bullet_light, (6, 8))
-    bullet_heavy = pygame.transform.scale(bullet_heavy, (14, 8))
-    coin_stack = pygame.transform.scale(coin_stack, (64, 64))
-    mayo_jar = pygame.transform.scale(mayo_jar, (37, 58))
-    mayo_jar_bw = pygame.transform.scale(mayo_jar_bw, (37, 58))
-    beer_bottle = pygame.transform.scale(beer_bottle, (20, 62))
-    beer_bottle_bw = pygame.transform.scale(beer_bottle_bw, (20, 62))
-    store_icon = pygame.transform.scale(store_icon, (128, 128))
-    mouse_icon = pygame.transform.scale(mouse_icon, (64, 64))
-    back = pygame.transform.scale(back, (128, 128))
-    star_empty = pygame.transform.scale(star_empty, (48, 48))
-    star_filled = pygame.transform.scale(star_filled, (48, 48))
-
-    sprites.update(
-        {
-            "bg": bg,
-            "bg_store": bg_store,
-            "bg_pause": bg_pause,
-            "ammo_light": ammo_light,
-            "ammo_heavy": ammo_heavy,
-            "bullet_light": bullet_light,
-            "bullet_heavy": bullet_heavy,
-            "coin_stack": coin_stack,
-            "mayo_jar": mayo_jar,
-            "mayo_jar_bw": mayo_jar_bw,
-            "beer_bottle": beer_bottle,
-            "beer_bottle_bw": beer_bottle_bw,
-            "store_icon": store_icon,
-            "mouse_icon": mouse_icon,
-            "back": back,
-            "star_empty": star_empty,
-            "star_filled": star_filled,
-        }
+    sprites["bg"] = pygame.transform.scale(sprites["bg"], (960, 540))
+    sprites["ammo_light"] = pygame.transform.scale(sprites["ammo_light"], (64, 64))
+    sprites["ammo_heavy"] = pygame.transform.scale(sprites["ammo_heavy"], (64, 64))
+    sprites["bullet_light"] = pygame.transform.scale(sprites["bullet_light"], (6, 8))
+    sprites["bullet_heavy"] = pygame.transform.scale(sprites["bullet_heavy"], (14, 8))
+    sprites["coin_stack"] = pygame.transform.scale(sprites["coin_stack"], (64, 64))
+    sprites["mayo_jar"] = pygame.transform.scale(sprites["mayo_jar"], (37, 58))
+    sprites["mayo_jar_bw"] = pygame.transform.scale(sprites["mayo_jar_bw"], (37, 58))
+    sprites["beer_bottle"] = pygame.transform.scale(sprites["beer_bottle"], (20, 62))
+    sprites["beer_bottle_bw"] = pygame.transform.scale(
+        sprites["beer_bottle_bw"], (20, 62)
     )
+    sprites["store_icon"] = pygame.transform.scale(sprites["store_icon"], (128, 128))
+    sprites["mouse_icon"] = pygame.transform.scale(sprites["mouse_icon"], (64, 64))
+    sprites["back"] = pygame.transform.scale(sprites["back"], (128, 128))
+    sprites["star_empty"] = pygame.transform.scale(sprites["star_empty"], (48, 48))
+    sprites["star_filled"] = pygame.transform.scale(sprites["star_filled"], (48, 48))
+
     return sprites
 
 
 def init_fonts():
-    # Fonts used
+    """Initialises the fonts used within the game UI."""
     fonts.update(
         {
             "standard_font": pygame.font.SysFont("comicsans", 18, False),
@@ -111,6 +92,7 @@ def init_fonts():
 
 
 def init_joysticks():
+    """Initialises each connected joystick/controller device."""
     joysticks = [
         pygame.joystick.Joystick(i) for i in range(pygame.joystick.get_count())
     ]
@@ -119,26 +101,34 @@ def init_joysticks():
     return joysticks
 
 
-def init_pause_buttons(settings: configparser.ConfigParser):
+def init_pause_buttons():
+    """Initialises the buttons displayed in the pause menu."""
+
     def toggle_mute(button: Button):
-        new_value = not settings.getboolean("General", "muted")
-        settings["General"]["muted"] = str(new_value)
+        new_value = not variables.settings.getboolean("General", "muted")
+        variables.settings["General"]["muted"] = str(new_value)
         button.selected = new_value
-        if settings.getboolean("General", "muted"):
+        if variables.settings.getboolean("General", "muted"):
             pygame.mixer.music.set_volume(0)
         else:
-            pygame.mixer.music.set_volume(settings.getint("General", "volume") / 100)
+            pygame.mixer.music.set_volume(
+                variables.settings.getint("General", "volume") / 100
+            )
 
     def toggle_slav_hitbox(button: Button):
         """Toggles the visibility of the box drawn around the player sprite."""
-        new_value = not settings.getboolean("Developer Options", "show_player_hitbox")
-        settings["Developer Options"]["show_player_hitbox"] = str(new_value)
+        new_value = not variables.settings.getboolean(
+            "Developer Options", "show_player_hitbox"
+        )
+        variables.settings["Developer Options"]["show_player_hitbox"] = str(new_value)
         button.selected = new_value
 
     def toggle_cop_hitbox(button: Button):
         """Toggles the visibility of the boxes drawn around the enemy sprites."""
-        new_value = not settings.getboolean("Developer Options", "show_cop_hitboxes")
-        settings["Developer Options"]["show_cop_hitboxes"] = str(new_value)
+        new_value = not variables.settings.getboolean(
+            "Developer Options", "show_cop_hitboxes"
+        )
+        variables.settings["Developer Options"]["show_cop_hitboxes"] = str(new_value)
         button.selected = new_value
 
     def unpause(*_):
@@ -157,7 +147,7 @@ def init_pause_buttons(settings: configparser.ConfigParser):
         "mute background music",
         "volume",
         on_click=toggle_mute,
-        selected=settings.getboolean("General", "muted"),
+        selected=variables.settings.getboolean("General", "muted"),
     )
     Button("back... [ESC]", "volume", next_menu="options")
     Button("toggle player hitbox", "dev", on_click=toggle_slav_hitbox)
@@ -171,6 +161,7 @@ def init_pause_buttons(settings: configparser.ConfigParser):
 
 
 def init_weapons():
+    """Initialises the weapon instances for each purchasable gun."""
     Weapon(
         (16, WIN_HEIGHT // 8),
         name="Beretta",

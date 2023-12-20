@@ -1,9 +1,12 @@
 import pygame
 
 from modules.constants import SPRITE_DIR
+from modules.classes.abstract import Clickable
 
 
-class Human:
+class Human(Clickable):
+    """Abstract class for human-like characters."""
+
     def __init__(
         self,
         x_pos: int,
@@ -23,10 +26,12 @@ class Human:
 
     @property
     def hitbox(self):
+        """The box consisting of object position and dimensions."""
         return [self.x_pos + 78, self.y_pos + 58, 100, 190]
 
 
 def get_sprite_frames(num_frames: int, sprite_prefix: str = ""):
+    """Returns two lists of images representing the animation frames."""
     frames_right = []
     frames_left = []
     for i in range(1, num_frames + 1):

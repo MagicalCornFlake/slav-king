@@ -8,7 +8,7 @@ from modules.classes.purchasables.ability import AbilityPurchasable
 class Ability(Clickable):
     """Base class for the in-game abilities."""
 
-    all = []
+    all: list["Clickable"] = []
 
     def __init__(self, x_pos, y_pos, name):
         self.text_x = x_pos

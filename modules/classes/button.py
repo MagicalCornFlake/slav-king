@@ -71,8 +71,6 @@ class Button(Clickable):
 
     def draw(self, win, bg_shade=None):
         """Renders the button in the pause menu."""
-        if self.dimensions is None:
-            self.initialise_dimensions()
         if bg_shade is None:
             bg_shade = 64 if self.selected else 128
         pygame.draw.rect(win, [bg_shade] * 3, self.dimensions)
@@ -93,18 +91,20 @@ class Button(Clickable):
 
 # SLIDER CODE
 class Slider(Button):
+    """Child of `Button` class that has slider functionality instead of simple clicking."""
+
     def __init__(self, text, sections: str | list[str]):
         super().__init__(text, sections)
         self.label_text = text
         self.text = None
         self.slider_dimensions = None
 
-    def draw(self, win, volume_settings: configparser.SectionProxy, bg_shade=32):
-        if volume_settings.getboolean("muted"):
+    def draw(self, win, bg_shade=32):
+        if variables.settings.getboolean("General", "muted"):
             volume = 0
             volume_text = "MUTED"
         else:
-            volume_percentage = volume_settings.getint("volume")
+            volume_percentage = variables.settings.getint("General", "volume")
             volume = volume_percentage / 100
             volume_text = f"{volume_percentage}%"
         self.text = self.standard_font.render(
