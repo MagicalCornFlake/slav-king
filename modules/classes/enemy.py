@@ -11,6 +11,8 @@ from modules.classes.human import Human, get_sprite_frames
 
 # P O L I C E
 class Enemy(Human):
+    """Cop enemy class."""
+
     frames_right, frames_left = get_sprite_frames(11, "E")
 
     def __init__(
@@ -22,6 +24,7 @@ class Enemy(Human):
         self.sprite_area = [self.x_pos, self.y_pos, 256, 256]
 
     def draw(self, win, slav, show_cop_hitboxes):
+        """Renders character to screen."""
         if not variables.paused:
             self.move(slav)
         if (
@@ -46,6 +49,7 @@ class Enemy(Human):
             pygame.draw.rect(win, (0, 0, 255), self.sprite_area, 2)
 
     def within_range_of(self, target: Human):
+        """Checks if the distance to the target is close enough to hit."""
         distance = abs(self.x_pos - target.x_pos)
         return distance <= self.weapon_range
 
@@ -60,7 +64,8 @@ class Enemy(Human):
             return
         self.x_pos += self.velocity * self.direction
 
-    def hit(self):  # When shot by bullet
+    def hit(self):
+        """Called when shot by bullet"""
         if variables.wanted_level == 0:
             variables.wanted_level += 1
         Effect("bullet_hit")
@@ -104,13 +109,8 @@ class Enemy(Human):
             if len(variables.drops) >= 10:
                 variables.drops.pop(0)
 
-    def regenerate(self):  # Respawn
+    def regenerate(self):
+        """Called on respawn."""
         self.health = 100
         self.x_pos = WIN_WIDTH
         self.y_pos = WIN_HEIGHT - 93
-
-    def touching_point(self, point: tuple[int, int]) -> bool:
-        return (
-            self.hitbox[0] < point[0] < self.hitbox[0] + self.hitbox[2]
-            and self.hitbox[1] < point[1] < self.hitbox[1] + self.hitbox[3]
-        )

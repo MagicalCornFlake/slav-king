@@ -9,7 +9,6 @@ from modules.classes.button import Button, Slider
 from modules.classes.effect import Effect
 from modules.classes.enemy import Enemy
 from modules.classes.player import Player
-from modules.classes.projectile import Projectile
 from modules.classes.purchasables.weapon import Weapon
 from modules.classes.purchasables.ability import AbilityPurchasable
 from modules.classes.purchasables.ammo import AmmoPurchasable
@@ -19,6 +18,8 @@ from modules.constants import (
     PAUSE_INSTRUCTIONS,
     AUDIO_DIR,
     STORE_ICON_PADDING,
+    INFINITE_AMMO,
+    GOD_MODE,
 )
 
 try:
@@ -46,48 +47,21 @@ pygame.mixer.music.set_volume(volume)
 pygame.mixer.music.load(AUDIO_DIR + "music.mp3")
 pygame.mixer.music.play(-1)
 
-# Cheats - Change these :D
-god_mode = False
-INFINITE_AMMO = False
 variables.money_count = settings.getint("Cheats", "start_money")
-
-
-def fire():
-    Effect(f"bullet_fire_{variables.selected_gun.name}")
-    variables.firing = True
-    if variables.shot_cooldown_time_passed < variables.shot_cooldown:
-        return
-    # Makes the script wait a certain amount of time before a gun is able to fire again (rof = Rate of Fire)
-    rate_of_fire = variables.selected_gun.rof / 60  # rounds per second
-    shot_interval = 1 / rate_of_fire  # seconds
-    variables.shot_cooldown_time_passed = 0
-    variables.shot_cooldown = shot_interval
-    # Fires bullet
-    variables.bullets.append(
-        Projectile(
-            (
-                round(slav.x_pos + slav.width // 2),
-                round(slav.y_pos + slav.height // 2.5),
-            ),
-            slav.direction,
-        )
-    )
-    if INFINITE_AMMO:
-        return
-    AmmoPurchasable.all[AmmoPurchasable.selected_ammo_idx].owned -= 1
 
 
 # RENDER GAME GRAPHICS / SPRITES
 def redraw_game_window(cop_hovering_over):
+    """Renders the game's graphics to the window."""
     win.blit(sprites["bg"], (variables.win_x, 0))
     if variables.win_x > 0:
         win.blit(sprites["bg"], (variables.win_x - WIN_WIDTH, 0))
     elif variables.win_x < 0:
         win.blit(sprites["bg"], (variables.win_x + WIN_WIDTH, 0))
+
+    draw_cop_hitboxes = settings.getboolean("Developer Options", "show_cop_hitboxes")
     for cop_to_draw in variables.cops:
-        cop_to_draw.draw(
-            win, slav, settings.getboolean("Developer Options", "show_cop_hitboxes")
-        )
+        cop_to_draw.draw(win, slav, draw_cop_hitboxes)
     for drop in variables.drops:
         drop.draw(win, sprites)
     for bullet in variables.bullets:
@@ -97,10 +71,10 @@ def redraw_game_window(cop_hovering_over):
     highscore_text = fonts["bold_font"].render(
         f"highscore: {settings['Cheats']['highscore']}", 1, [255] * 3
     )
+    fps_byte = round(variables.fps / 27) * 255
+    fps_colour = (255 - fps_byte, fps_byte, 0)
     fps_counter_text = fonts["bold_font"].render(
-        f"{variables.fps:.1f} FPS",
-        1,
-        (255 - round(variables.fps / 27 * 255), round(variables.fps / 27 * 255), 0),
+        f"{variables.fps:.1f} FPS", 1, fps_colour
     )
     money_count_text = fonts["bold_font"].render(
         f"money: ${variables.money_count}", 1, [255] * 3
@@ -133,7 +107,7 @@ def redraw_game_window(cop_hovering_over):
             for powerup in AbilityPurchasable.all:
                 powerup.draw(win)
             if AmmoPurchasable.selected_ammo_idx is not None:
-                AmmoPurchasable.all[AmmoPurchasable.selected_ammo_idx].draw(win)
+                AmmoPurchasable.get_selected().draw(win)
         elif variables.pause_menu == "quit":
             win.blit(
                 quit_text,
@@ -162,7 +136,7 @@ def redraw_game_window(cop_hovering_over):
         if INFINITE_AMMO:
             ammo_count_text = fonts["bold_font"].render("ammo: ∞", 1, [255] * 3)
         else:
-            ammo_count = AmmoPurchasable.all[AmmoPurchasable.selected_ammo_idx].owned
+            ammo_count = AmmoPurchasable.get_selected().owned
             ammo_count_text = fonts["bold_font"].render(
                 f"ammo: {ammo_count}", 1, [255] * 3
             )
@@ -258,9 +232,9 @@ while variables.run:
             variables.shot_cooldown_time_passed >= variables.shot_cooldown
             and variables.selected_gun is not None
         ):
-            ammo_count = AmmoPurchasable.all[AmmoPurchasable.selected_ammo_idx].owned
+            ammo_count = AmmoPurchasable.get_selected().owned
             if ammo_count > 0 or INFINITE_AMMO:
-                fire()
+                variables.selected_gun.fire(slav)
             else:  # Plays empty mag sound effect if space was pressed this frame
                 Effect("bullet_empty")
                 variables.firing = False
@@ -381,9 +355,7 @@ while variables.run:
                                 usable_powerup.flash()
                     # If clicked on another purchasable
                     if AmmoPurchasable.selected_ammo_idx is not None:
-                        ammo_purchasable = AmmoPurchasable.all[
-                            AmmoPurchasable.selected_ammo_idx
-                        ]
+                        ammo_purchasable = AmmoPurchasable.get_selected()
                         if ammo_purchasable.is_hovered(mouse_pos):
                             if ammo_purchasable.affordable:
                                 variables.money_count -= ammo_purchasable.cost
@@ -464,10 +436,10 @@ while variables.run:
         # If player touches any cop
         for cop in variables.cops:
             if variables.wanted_level > 0:
-                if cop.touching_point(mouse_pos):
-                    variables.cop_hovering_over = (mouse_pos[0], mouse_pos[1])
+                if cop.is_hovered(mouse_pos):
+                    variables.cop_hovering_over = mouse_pos
                 if (
-                    not god_mode
+                    not GOD_MODE
                     and cop.within_range_of(slav)
                     and cop.animation_stage > 29
                 ):
@@ -524,7 +496,7 @@ while variables.run:
                 variables.bullets.remove(fired_bullet)
                 continue
             for cop in variables.cops:
-                if cop.touching_point((fired_bullet.x_pos, fired_bullet.y_pos)):
+                if cop.is_hovered((fired_bullet.x_pos, fired_bullet.y_pos)):
                     cop.hit()
                     variables.score += 1
                     variables.bullets.remove(fired_bullet)

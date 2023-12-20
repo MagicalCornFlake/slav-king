@@ -25,3 +25,7 @@ LOOT_TABLE = {
 }
 
 STORE_ICON_PADDING = 24
+
+# Cheats - Change these :D
+GOD_MODE = False
+INFINITE_AMMO = False

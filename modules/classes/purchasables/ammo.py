@@ -9,7 +9,7 @@ class AmmoPurchasable(ShopItem):
     """Base class for the ammo purchasable sprites in the shop."""
 
     all = []
-    selected_ammo_idx = None
+    selected_ammo_idx: None | int = None
 
     def __init__(
         self, pos: tuple[int, int], name: str, cost: int, owned: int, quantity: int
@@ -59,3 +59,10 @@ class AmmoPurchasable(ShopItem):
     def flash(self):
         """Perform the flash animation when the user cannot afford this ammo purchasable."""
         self.flash_sequence = 0
+
+    @classmethod
+    def get_selected(cls):
+        """Convenience method to return the currently selected ammo type."""
+        if cls.selected_ammo_idx is None:
+            return None
+        return cls.all[int(cls.selected_ammo_idx)]

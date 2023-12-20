@@ -9,7 +9,7 @@ import tkinter.messagebox
 tkinter.Tk().wm_withdraw()  # Hides root window
 
 
-# Define custom message box called 'abort/retry/ignore' using Tknter's template
+# Define custom message box called 'abort/retry/ignore' using Tkinter's template
 def ask_abort_retry_ignore(
     title: str = None,
     message: str = None,
@@ -36,7 +36,8 @@ def ask_abort_retry_ignore(
         options["title"] = title
     if message:
         options["message"] = message
-    res = tkinter.messagebox.Message(**options).show()
+    message_box = tkinter.messagebox.Message(**options)
+    res = message_box.show()
     # In some Tcl installations, yes/no is converted into a boolean.
     if isinstance(res, bool):
         return "yes" if res else "no"

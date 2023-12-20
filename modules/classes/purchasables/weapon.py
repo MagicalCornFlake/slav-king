@@ -1,8 +1,14 @@
+"""Class definition for the weapons used by the player, purchasable in the shop."""
+
 import pygame
 
 from modules import variables, init
+from modules.constants import IMAGE_DIR, INFINITE_AMMO
+from modules.classes.human import Human
+from modules.classes.effect import Effect
+from modules.classes.projectile import Projectile
 from modules.classes.purchasables.shop_item import ShopItem
-from modules.constants import IMAGE_DIR
+from modules.classes.purchasables.ammo import AmmoPurchasable
 
 
 FRAME_WIDTH = 16 * 16
@@ -104,3 +110,28 @@ class Weapon(ShopItem):
     def flash(self):
         """Perform the flash animation when the user cannot afford this weapon."""
         self.flash_sequence = 0
+
+    def fire(self, shooter: Human):
+        """Handle weapon firing."""
+        Effect(f"bullet_fire_{self.name}")
+        variables.firing = True
+        if variables.shot_cooldown_time_passed < variables.shot_cooldown:
+            return
+        # Makes the script wait a certain amount of time before a gun is able to fire again (rof = Rate of Fire)
+        rate_of_fire = self.rof / 60  # rounds per second
+        shot_interval = 1 / rate_of_fire  # seconds
+        variables.shot_cooldown_time_passed = 0
+        variables.shot_cooldown = shot_interval
+        # Fires bullet
+        variables.bullets.append(
+            Projectile(
+                (
+                    round(shooter.x_pos + shooter.width // 2),
+                    round(shooter.y_pos + shooter.height // 2.5),
+                ),
+                shooter.direction,
+            )
+        )
+        if INFINITE_AMMO or AmmoPurchasable.selected_ammo_idx is None:
+            return
+        AmmoPurchasable.get_selected().owned -= 1
