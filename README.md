@@ -1,0 +1,56 @@
+# Slav King
+
+This is a 2D game written in Python using the `pygame` library. It is currently in early stages of development, but is in a stable state and is playable.
+Some graphics are WIP and temporary sprites from third-party authors are currently used. This is subject to change, and they will be replaced with origial artwork.
+The game settings are stored in `data/settings.ini` and can be changed to your preference.
+
+## Gameplay
+
+### Objective
+
+You are a criminal 'slav', who roams the streets of Russia and is generally up to no good.
+There is no clear goal, but the intended playthrough consists of buying a weapon and killing as many cops as you can.
+As you shoot more cops, you earn more money, which you can use to buy better weapons and powerups such as mayonnaise and beer.
+
+### Powerups
+
+The powerups in the game can be purchased in the shop and are activated in-game by clicking the powerup icon.
+
+#### Mayonnaise
+
+Mayonnaise **increases** your speed by 2x and increases the damage dealt to cops by 2x.
+
+#### Beer
+
+Beer **decreases** your speed by 2x and increases the damage dealt to cops by 3x.
+
+### Weapons
+
+- Beretta ($50)
+- Deagle ($150)
+- MP5 ($200)
+- AK-47 ($300)
+
+## Installation
+
+You must have Python 3 installed to play this game. The latest Python version is recommended and can be installed at [python.org](https://www.python.org/downloads/).
+If you already have an older Python 3 version, the program should run fine.
+The game has only been tested on `3.11` so if you encounter any problems consider upgrading your Python installation.
+
+To run the game, enter the `slav-king` directory and run the following command:
+```sh
+python main.py
+```
+
+## Planned changes
+
+- add keybinds for powerups
+- add general keyboard support
+- add keyboard shortcut editor
+- add game objectives
+- add info/help, item descriptions
+- replace temp sprites with own artwork
+- add 'crouching' and melee attacks
+- add end-game cops who can shoot at the player
+
+Thank you for reading!
