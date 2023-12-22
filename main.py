@@ -36,7 +36,6 @@ joysticks = init.init_joysticks()
 clock = pygame.time.Clock()  # To make calling the method quicker
 
 cop_spawn_delay = random.randint(500, 2500) / 1000
-select_button_held = False
 cop_hovering_over = None
 
 # Gets the volume from settings and converts it into decimal instead of percentage
@@ -160,7 +159,7 @@ AmmoPurchasable(
 )
 
 AbilityPurchasable((16 * 2 + 256, WIN_HEIGHT // 8), name="mayo", cost=50)
-AbilityPurchasable((16 * 3 + 256 + 224, WIN_HEIGHT // 8), name="beer", cost=100)
+AbilityPurchasable((16 * 3 + 256 + 224, WIN_HEIGHT // 8), name="beer", cost=60)
 
 Ability(20, 75, "mayo")
 Ability(20, 75 + 100, "beer")
@@ -206,56 +205,69 @@ def handle_button_presses(mouse_pos: tuple[int, int]):
         break
 
 
+def is_key_pressed(key_name: str):
+    """Checks if the given key is currently pressed this frame."""
+    directions = {"right": 1, "left": -1}
+    direction = directions.get(key_name)
+
+    def check_joystick_movement(joystick: pygame.joystick.Joystick):
+        joystick_x_axis = joystick.get_axis(0)
+        return abs(joystick_x_axis) > 0.5 and joystick_x_axis * direction > 0
+
+    def check_joystick_buttons(joystick: pygame.joystick.Joystick):
+        button = get_button_index(key_name)
+        return joystick.get_button(button)
+
+    check_input = (
+        check_joystick_buttons if direction is None else check_joystick_movement
+    )
+
+    if any(check_input(joystick) for joystick in joysticks):
+        return True
+
+    return keys[get_key_index(key_name)]
+
+
+def go_back_in_pause_menu():
+    """Handles the pause menu change when the user presses the 'back' button."""
+    variables.pause_menu = PAUSE_INSTRUCTIONS[variables.pause_menu]
+    if variables.pause_menu == "unpause":
+        variables.paused = False
+        pygame.mixer.unpause()
+    elif variables.pause_menu == "prev":
+        variables.pause_menu = variables.previous_pause_menu
+
+
+def attempt_fire() -> None:
+    """Checks if it is possible to fire the weapon, and if so, calls the weapon fire method."""
+    if (
+        variables.shot_cooldown_time_passed >= variables.shot_cooldown
+        and variables.selected_gun is not None
+    ):
+        ammo_count = AmmoPurchasable.get_selected().owned
+        if ammo_count > 0 or INFINITE_AMMO:
+            variables.selected_gun.fire(slav)
+        else:  # Plays empty mag sound effect if space was pressed this frame
+            Effect("bullet_empty")
+            variables.firing = False
+
+
+def check_joysticks():
+    """Cycles through all connected joysticks and checks if any of them is held."""
+    _select_button_held = False
+    for joystick in joysticks:
+        if joystick.get_button(get_button_index("select")):
+            _select_button_held = True
+        os_tools.set_cursor_pos(joystick)
+    return _select_button_held
+
+
 # MAIN LOOP
 while variables.run:
     clock.tick(27)  # Loops every 1/27 seconds (27 FPS)
     variables.fps = clock.get_fps()
     keys = pygame.key.get_pressed()
     mouse_pos = pygame.mouse.get_pos()
-
-    def is_key_pressed(key_name: str):
-        """Checks if the given key is currently pressed this frame."""
-        directions = {"right": 1, "left": -1}
-        direction = directions.get(key_name)
-
-        def check_joystick_movement(joystick: pygame.joystick.Joystick):
-            joystick_x_axis = joystick.get_axis(0)
-            return abs(joystick_x_axis) > 0.5 and joystick_x_axis * direction > 0
-
-        def check_joystick_buttons(joystick: pygame.joystick.Joystick):
-            button = get_button_index(key_name)
-            return joystick.get_button(button)
-
-        check_input = (
-            check_joystick_buttons if direction is None else check_joystick_movement
-        )
-
-        if any(check_input(joystick) for joystick in joysticks):
-            return True
-
-        return keys[get_key_index(key_name)]
-
-    def go_back_in_pause_menu():
-        """Handles the pause menu change when the user presses the 'back' button."""
-        variables.pause_menu = PAUSE_INSTRUCTIONS[variables.pause_menu]
-        if variables.pause_menu == "unpause":
-            variables.paused = False
-            pygame.mixer.unpause()
-        elif variables.pause_menu == "prev":
-            variables.pause_menu = variables.previous_pause_menu
-
-    def attempt_fire() -> None:
-        """Checks if it is possible to fire the weapon, and if so, calls the weapon fire method."""
-        if (
-            variables.shot_cooldown_time_passed >= variables.shot_cooldown
-            and variables.selected_gun is not None
-        ):
-            ammo_count = AmmoPurchasable.get_selected().owned
-            if ammo_count > 0 or INFINITE_AMMO:
-                variables.selected_gun.fire(slav)
-            else:  # Plays empty mag sound effect if space was pressed this frame
-                Effect("bullet_empty")
-                variables.firing = False
 
     # Detects window updates
     for event in pygame.event.get():
@@ -394,7 +406,7 @@ while variables.run:
 
     # If dragging volume slider
     if variables.slider_engaged and (
-        select_button_held or pygame.mouse.get_pressed(num_buttons=3)[0]
+        check_joysticks() or pygame.mouse.get_pressed(num_buttons=3)[0]
     ):
         # Converts mouse position on slider into volume percentage
         temp_volume = int(
@@ -407,16 +419,6 @@ while variables.run:
             variables.settings.getint("General", "volume") / 100
         )
 
-    def check_joysticks():
-        """Cycles through all connected joysticks and checks if any of them is held."""
-        _select_button_held = False
-        for joystick in joysticks:
-            if joystick.get_button(get_button_index("select")):
-                _select_button_held = True
-            os_tools.set_cursor_pos(joystick)
-        return _select_button_held
-
-    select_button_held = check_joysticks()
     # GAME LOGIC
     if not variables.paused:
         variables.shot_cooldown_time_passed += 1 / 27  # Seconds

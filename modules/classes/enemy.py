@@ -5,7 +5,7 @@ import random
 import pygame
 
 from modules import variables
-from modules.constants import WIN_WIDTH, WIN_HEIGHT, LOOT_TABLE
+from modules.constants import WIN_WIDTH, WIN_HEIGHT, LOOT_TABLE, MAX_RENDERED_DROPS
 from modules.classes.effect import Effect
 from modules.classes.loot_drop import LootDrop
 from modules.classes.human import Human, get_sprite_frames
@@ -112,8 +112,8 @@ class Enemy(Human):
                         LootDrop((random_x, random_y), seed, loot_type)
                     )
             variables.cops.remove(self)
-            # Deletes the oldest created loot drop if there are more than ten
-            if len(variables.drops) >= 10:
+            # Deletes the oldest created loot drop if there are more than the max
+            if len(variables.drops) >= MAX_RENDERED_DROPS:
                 variables.drops.pop(0)
 
     def regenerate(self):

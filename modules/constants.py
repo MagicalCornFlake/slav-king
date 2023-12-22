@@ -29,3 +29,6 @@ STORE_ICON_PADDING = 24
 # Cheats - Change these :D
 GOD_MODE = False
 INFINITE_AMMO = False
+
+# After 50 drops, the oldest ones will start to disappear
+MAX_RENDERED_DROPS = 50

@@ -38,9 +38,17 @@ If you already have an older Python 3 version, the program should run fine.
 The game has only been tested on `3.11` so if you encounter any problems consider upgrading your Python installation.
 
 To run the game, enter the `slav-king` directory and run the following command:
+
 ```sh
 python main.py
 ```
+
+## Hardware support
+
+The game currently requires a keyboard and mouse to play to its full extent.
+In the future, it is planned to only require a keyboard by implementing keyboard shortcuts for all needed tasks.
+Additionally, for Windows users, there is controller support in the form of button and joystick bindings.
+For tasks that require the mouse, the right stick can be used to artificially move the cursor (WIP solution).
 
 ## Planned changes
 
