@@ -34,9 +34,6 @@ fonts = init.init_fonts()
 joysticks = init.init_joysticks()
 clock = pygame.time.Clock()  # To make calling the method quicker
 
-cop_spawn_delay = random.randint(500, 2500) / 1000
-cop_hovering_over = None
-
 # Gets the volume from settings and converts it into decimal instead of percentage
 volume = (
     0
@@ -101,8 +98,8 @@ def redraw_game_window():
             win.blit(sprites["back"], (16, WIN_HEIGHT - 16 - 64 - 16))
             for gun in Weapon.all:
                 gun.draw(win)
-            for powerup in Ability.all:
-                powerup.draw(win)
+            for ability_icon in Ability.all:
+                ability_icon.draw(win)
             if AmmoPurchasable.selected_ammo_idx is not None:
                 AmmoPurchasable.get_selected().draw(win)
         elif variables.pause_menu == "quit":
@@ -124,8 +121,8 @@ def redraw_game_window():
             )
             store_icon = sprites["store_icon"]
             win.blit(store_icon, (0, WIN_HEIGHT - 128))
-    elif cop_hovering_over is not None:
-        win.blit(sprites["mouse_icon"], cop_hovering_over)
+    elif variables.cop_hovering_over is not None:
+        win.blit(sprites["mouse_icon"], variables.cop_hovering_over)
     win.blit(score_text, (WIN_WIDTH - score_text.get_width() - 20, 10))
     win.blit(highscore_text, (WIN_WIDTH - highscore_text.get_width() - 20, 30))
     win.blit(fps_counter_text, (WIN_WIDTH - fps_counter_text.get_width() - 20, 50))
@@ -139,8 +136,8 @@ def redraw_game_window():
             )
         win.blit(ammo_count_text, (20, 30))
     win.blit(money_count_text, (20, 10))
-    for ability in Ability.all:
-        ability.draw_icon(win)
+    for ability_icon in Ability.all:
+        ability_icon.draw_icon(win)
     pygame.display.update()
 
 
@@ -224,7 +221,7 @@ def is_key_pressed(key_name: str):
     if any(check_input(joystick) for joystick in joysticks):
         return True
 
-    return keys[get_key_index(key_name)]
+    return get_key_index(key_name)
 
 
 def go_back_in_pause_menu():
@@ -284,10 +281,8 @@ def handle_mouse_clicks(mouse_pos: tuple[int, int]):
             and ability.progress == 0
         ):
             ability.activate(slav)
-            Effect("mayo")
-            Effect("eating")
             return
-    if cop_hovering_over is not None:
+    if variables.cop_hovering_over is not None:
         if variables.money_count >= 100:
             variables.money_count -= 100
             variables.wanted_level = 0
@@ -374,23 +369,30 @@ def handle_pygame_event(event: pygame.event.Event, mouse_pos: tuple[int, int]):
                 if event.type == pygame.KEYDOWN
                 else (event.button, get_button_index)
             )
-            if user_input == get_index_function("attack"):
-                attempt_fire()
-                return
             # If escape was pressed this frame
-            if (
-                user_input == get_index_function("pause")
-                or variables.paused
-                and user_input == get_index_function("back")
-            ):
-                if variables.paused:
+            if variables.paused:
+                if user_input == get_index_function("back"):
                     # Defines what pressing the escape key should do inside pause menu
                     go_back_in_pause_menu()
-                else:  # Pauses game if escape is pressed
-                    variables.paused = True
-                    variables.pause_menu = "main"
-                    pygame.mixer.pause()
+                    return
+            elif user_input == get_index_function("pause"):
+                # Pauses game if escape is pressed
+                variables.paused = True
+                variables.pause_menu = "main"
+                pygame.mixer.pause()
                 return
+            elif user_input == get_index_function("attack"):
+                attempt_fire()
+                return
+            else:
+                for ability in Ability.all:
+                    if (
+                        ability.owned > 0
+                        and ability.progress == 0
+                        and user_input == get_index_function("activate_" + ability.name)
+                    ):
+                        ability.activate(slav)
+                        break
             if user_input == get_index_function("open_shop"):
                 if variables.paused and variables.pause_menu == "shop":
                     variables.paused = False
@@ -418,8 +420,76 @@ def handle_pygame_event(event: pygame.event.Event, mouse_pos: tuple[int, int]):
             pass
 
 
-# MAIN LOOP
-while variables.run:
+def cycle_cops(mouse_pos: tuple[int, int]):
+    """Checks events for each cop."""
+    variables.cop_hovering_over = None
+    # If player touches any cop
+    for cop in variables.cops:
+        # If any bullet touches any cop
+        for fired_bullet in variables.bullets:
+            if not cop.is_hovered((fired_bullet.x_pos, fired_bullet.y_pos)):
+                continue
+            cop.hit(slav.status_effects)
+            variables.score += 1
+            variables.bullets.remove(fired_bullet)
+            break
+
+        if variables.wanted_level == 0:
+            continue
+        if cop.is_hovered(mouse_pos):
+            variables.cop_hovering_over = mouse_pos
+        if GOD_MODE or not cop.within_range_of(slav) or cop.animation_stage < 30:
+            continue
+        slav.hit(win)
+        variables.firing = False
+        variables.score = 0
+        for ammo_purchasable in AmmoPurchasable.all:
+            ammo_purchasable.owned = ammo_purchasable.initial_owned_amount
+        for ability in Ability.all:
+            ability.progress = 0
+        AmmoPurchasable.selected_ammo_idx = None
+        variables.money_count = variables.settings.getint("Cheats", "start_money")
+        variables.wanted_level = 0
+        variables.cops = []
+        variables.cop_amount = 1
+        variables.bullets = []
+        variables.drops = []
+        variables.selected_gun = None
+        variables.cop_hovering_over = None
+
+
+def cycle_loot_drops():
+    """Handle events for all loot drops."""
+    # If player touches ammo drop
+    for loot_drop in variables.drops:
+        if (
+            slav.hitbox[1] < loot_drop.hitbox[1] + loot_drop.hitbox[3]
+            and slav.hitbox[1] + slav.hitbox[3] > loot_drop.hitbox[1]
+        ):
+            if (
+                slav.hitbox[0] + slav.hitbox[2] > loot_drop.hitbox[0]
+                and slav.hitbox[0] < loot_drop.hitbox[0] + loot_drop.hitbox[2]
+            ):
+                play_coin_pickup_sound = True
+                if loot_drop.loot_type.startswith("ammo"):
+                    ammo_idx = ("ammo_light", "ammo_heavy").index(loot_drop.loot_type)
+                    ammo_type = AmmoPurchasable.all[ammo_idx]
+                    ammo_type.owned += loot_drop.pickup_amount
+                    if ammo_idx == AmmoPurchasable.selected_ammo_idx:
+                        Effect("weapon_charge")
+                        play_coin_pickup_sound = False
+                else:
+                    variables.money_count += loot_drop.pickup_amount
+                if play_coin_pickup_sound:
+                    # Plays random coin pickup sound
+                    effect_number = random.randint(1, 10)
+                    Effect(f"money_pickup{effect_number}")
+                # Deletes loot drop sprite after collecting it
+                variables.drops.remove(loot_drop)
+
+
+def tick():
+    """Main game loop."""
     clock.tick(27)  # Loops every 1/27 seconds (27 FPS)
     variables.fps = clock.get_fps()
     keys = pygame.key.get_pressed()
@@ -453,7 +523,10 @@ while variables.run:
         ):
             attempt_fire()
         if len(variables.cops) < variables.cop_amount:
-            if variables.time_passed_since_last_cop_spawned >= cop_spawn_delay:
+            if (
+                variables.time_passed_since_last_cop_spawned
+                >= variables.cop_spawn_delay
+            ):
                 variables.cops.append(
                     Enemy(
                         WIN_WIDTH - 1,
@@ -464,7 +537,7 @@ while variables.run:
                     )
                 )
                 variables.time_passed_since_last_cop_spawned = 0
-                cop_spawn_delay = random.randint(500, 3000) / 1000
+                variables.cop_spawn_delay = random.randint(500, 3000) / 1000
             else:
                 variables.time_passed_since_last_cop_spawned += 1 / 27
 
@@ -473,82 +546,21 @@ while variables.run:
             if ability.progress > 0:
                 ability.activate(slav)
 
-        cop_hovering_over = None
-        # If player touches any cop
-        for cop in variables.cops:
-            if variables.wanted_level > 0:
-                if cop.is_hovered(mouse_pos):
-                    cop_hovering_over = mouse_pos
-                if (
-                    not GOD_MODE
-                    and cop.within_range_of(slav)
-                    and cop.animation_stage > 29
-                ):
-                    slav.hit(win)
-                    variables.firing = False
-                    variables.score = 0
-                    for ammo_purchasable in AmmoPurchasable.all:
-                        ammo_purchasable.owned = ammo_purchasable.initial_owned_amount
-                    for ability in Ability.all:
-                        ability.progress = 0
-                    AmmoPurchasable.selected_ammo_idx = None
-                    variables.money_count = variables.settings.getint(
-                        "Cheats", "start_money"
-                    )
-                    variables.wanted_level = 0
-                    variables.cops = []
-                    variables.cop_amount = 1
-                    variables.bullets = []
-                    variables.drops = []
-                    variables.selected_gun = None
-                    cop_hovering_over = None
-        # If player touches ammo drop
-        for loot_drop in variables.drops:
-            if (
-                slav.hitbox[1] < loot_drop.hitbox[1] + loot_drop.hitbox[3]
-                and slav.hitbox[1] + slav.hitbox[3] > loot_drop.hitbox[1]
-            ):
-                if (
-                    slav.hitbox[0] + slav.hitbox[2] > loot_drop.hitbox[0]
-                    and slav.hitbox[0] < loot_drop.hitbox[0] + loot_drop.hitbox[2]
-                ):
-                    play_coin_pickup_sound = True
-                    if loot_drop.loot_type.startswith("ammo"):
-                        ammo_idx = ("ammo_light", "ammo_heavy").index(
-                            loot_drop.loot_type
-                        )
-                        ammo_type = AmmoPurchasable.all[ammo_idx]
-                        ammo_type.owned += loot_drop.pickup_amount
-                        if ammo_idx == AmmoPurchasable.selected_ammo_idx:
-                            Effect("weapon_charge")
-                            play_coin_pickup_sound = False
-                    else:
-                        variables.money_count += loot_drop.pickup_amount
-                    if play_coin_pickup_sound:
-                        # Plays random coin pickup sound
-                        effect_number = random.randint(1, 10)
-                        Effect(f"money_pickup{effect_number}")
-                    # Deletes loot drop sprite after collecting it
-                    variables.drops.remove(loot_drop)
-        # If any bullet touches any cop
         for fired_bullet in variables.bullets:
             if 0 < fired_bullet.x_pos < WIN_WIDTH:
                 fired_bullet.x_pos += fired_bullet.velocity * fired_bullet.direction
             else:
                 variables.bullets.remove(fired_bullet)
                 continue
-            for cop in variables.cops:
-                if cop.is_hovered((fired_bullet.x_pos, fired_bullet.y_pos)):
-                    cop.hit(slav.status_effects)
-                    variables.score += 1
-                    variables.bullets.remove(fired_bullet)
-                    break
+        cycle_cops(mouse_pos)
+        cycle_loot_drops()
+
         # Moving left
-        if is_key_pressed("left") or keys[pygame.K_LEFT]:
+        if keys[is_key_pressed("left")] or keys[pygame.K_LEFT]:
             slav.direction = -1
             slav.velocity = 10
         # Moving right
-        elif is_key_pressed("right") or keys[pygame.K_RIGHT]:
+        elif keys[is_key_pressed("right")] or keys[pygame.K_RIGHT]:
             slav.direction = 1
             slav.velocity = 10
         # Not moving
@@ -558,13 +570,19 @@ while variables.run:
         # Jumping
         if slav.jumping:
             slav.continue_jump()
-        elif is_key_pressed("jump") or keys[pygame.K_UP]:
+        elif keys[is_key_pressed("jump")] or keys[pygame.K_UP]:
             slav.jumping = True
 
         if variables.score > variables.settings.getint("Cheats", "highscore"):
             # Updates high score if user has surpassed it
             variables.settings["Cheats"]["highscore"] = str(variables.score)
     redraw_game_window()
+
+
+while variables.run:
+    tick()
+
+
 pygame.quit()
 setup.write_settings()
 setup.cleanup()

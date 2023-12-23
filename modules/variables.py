@@ -1,6 +1,7 @@
 """Global game variable definitions."""
 
 from configparser import ConfigParser
+import random
 
 # Game variables
 score = 0
@@ -14,6 +15,8 @@ cop_amount = 1
 win_x = 0
 pause_menu = "main"
 previous_pause_menu = ""
+cop_hovering_over: None | tuple[int, int] = None
+cop_spawn_delay = random.randint(500, 2500) / 1000
 
 run = True
 firing = False

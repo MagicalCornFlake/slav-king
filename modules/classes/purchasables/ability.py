@@ -1,8 +1,11 @@
+"""Module containing ability purchasable behaviour."""
+
 import pygame
 
 from modules import init, variables
 from modules.constants import IMAGE_DIR
 from modules.classes.abstract import ShopItem
+from modules.classes.effect import Effect
 
 ICON_MARGIN_LEFT = 20
 ICON_GAP = 100
@@ -47,7 +50,7 @@ class Ability(ShopItem):
             58 + self.icon_text.get_height(),
         ]
         self.bar_dimensions = [
-            self.text_x + self.icon_text.get_width() - 11,
+            self.text_x + self.icon_text.get_width() + 1,
             self.icon_y + 18,
             10,
             40,
@@ -108,15 +111,19 @@ class Ability(ShopItem):
             return
         self.dummy_text = self.bold_font.render(str(self.owned)[0], 1, (0, 0, 0))
 
+        activation_keybinding = variables.settings["Keybindings"][
+            "activate_" + self.name
+        ]
+        render_text = f"{self.name} ({activation_keybinding})"
         if self.owned > 0 or self.progress > 0:
-            self.icon_text = self.bold_font.render(self.name, 1, [255] * 3)
+            self.icon_text = self.bold_font.render(render_text, 1, [255] * 3)
             self.owned_text = self.bold_font.render(str(self.owned), 1, [255] * 3)
             win.blit(
                 init.sprites[SPRITE_NAMES[self.name]],
                 (self.icon_x, self.icon_y),
             )
         else:
-            self.icon_text = self.bold_font.render(self.name, 1, [128] * 3)
+            self.icon_text = self.bold_font.render(render_text, 1, [128] * 3)
             self.owned_text = self.bold_font.render("0", 1, [128] * 3)
             win.blit(
                 init.sprites[SPRITE_NAMES[self.name] + "_bw"],
@@ -128,8 +135,7 @@ class Ability(ShopItem):
             (
                 self.text_x
                 + self.icon_text.get_width()
-                - self.dummy_text.get_width()
-                + 5,
+                - self.dummy_text.get_width() * 2,
                 self.icon_y - 2,
             ),
         )
@@ -157,6 +163,8 @@ class Ability(ShopItem):
         """Enables the ability and starts its timer."""
         if self.progress == 0:
             self.owned -= 1
+            Effect("mayo")
+            Effect("eating")
         if self.progress < 240:
             self.progress += 1
             slav.status_effects.add(self.name + "_power")
