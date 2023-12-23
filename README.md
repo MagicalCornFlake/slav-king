@@ -18,11 +18,11 @@ The powerups in the game can be purchased in the shop and are activated in-game 
 
 #### Mayonnaise
 
-Mayonnaise **increases** your speed by 2x and increases the damage dealt to cops by 2x.
+Mayonnaise **increases** your speed by 2x and increases the damage dealt to cops by 2x. Cost: $50.
 
 #### Beer
 
-Beer **decreases** your speed by 2x and increases the damage dealt to cops by 3x.
+Beer **decreases** your speed by 2x and increases the damage dealt to cops by 3x. Cost: $60.
 
 ### Weapons
 
@@ -52,7 +52,7 @@ For tasks that require the mouse, the right stick can be used to artificially mo
 
 ## Planned changes
 
-- add keybinds for powerups
+- ~~add keybinds for powerups~~ *Edit 2023-12-23: Implemented in [85dbd5d](https://github.com/kguzek/slav-king/commit/85dbd5d3440a44535ec54e8df509c0d0bbc3d3c5)*
 - add general keyboard support
 - add keyboard shortcut editor
 - add game objectives
