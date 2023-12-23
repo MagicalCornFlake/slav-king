@@ -5,7 +5,7 @@ import pygame
 from modules import variables, init
 from modules.constants import WIN_WIDTH
 from modules.classes.human import Human, get_sprite_frames
-from modules.classes.purchasables.ability import AbilityPurchasable
+from modules.classes.purchasables.ability import Ability
 from modules.classes.purchasables.weapon import Weapon, get_scaled_image_dimensions
 
 
@@ -27,12 +27,13 @@ class Player(Human):
         super().__init__(x_pos, y_pos, width, height, 0, 1)
         self.jump_stage = 40
         self.jumping = False
+        self.status_effects = set()
         self.reset()
 
     def reset(self):
         """Resets all object properties to their initial state."""
-        self.velocity_multiplier = 1
         self.jumping = True
+        self.status_effects = set()
         self.velocity = 0
         self.animation_stage = 0
         self.jump_stage = 40
@@ -72,7 +73,16 @@ class Player(Human):
 
     def move(self):
         """Move all objects on the screen with the character's movement."""
-        distance = self.velocity * self.direction * self.velocity_multiplier
+        velocity_multiplier = 1
+        for status_effect in self.status_effects:
+            match status_effect:
+                case "beer_power":
+                    velocity_multiplier *= 0.5
+                case "mayo_power":
+                    velocity_multiplier *= 2
+                case _:
+                    break
+        distance = self.velocity * self.direction * velocity_multiplier
         if distance == 0:
             return
         if WIN_WIDTH // 3 > self.x_pos + distance > 80:
@@ -101,7 +111,7 @@ class Player(Human):
         i = 0
         for gun in Weapon.all:
             gun.owned = False
-        for powerup in AbilityPurchasable.all:
+        for powerup in Ability.all:
             powerup.owned = 0
         while i < 100:  # Waits 100 * 10ms (one second)
             pygame.time.delay(10)

@@ -1,14 +1,22 @@
 import pygame
 
-from modules import init
+from modules import init, variables
 from modules.constants import IMAGE_DIR
-from modules.classes.purchasables.shop_item import ShopItem
+from modules.classes.abstract import ShopItem
+
+ICON_MARGIN_LEFT = 20
+ICON_GAP = 100
+
+SPRITE_NAMES = {
+    "beer": "beer_bottle",
+    "mayo": "mayo_jar",
+}
 
 
-class AbilityPurchasable(ShopItem):
+class Ability(ShopItem):
     """Base class for the ability sprites in the shop."""
 
-    all: list["AbilityPurchasable"] = []
+    all: list["Ability"] = []
 
     def __init__(self, pos: tuple[int, int], name: str, cost: int):
         super().__init__(pos, name, cost)
@@ -25,6 +33,33 @@ class AbilityPurchasable(ShopItem):
             self.y_pos + 144 - 10,
         ]
         self.owned_text_position = [self.x_pos + 16, self.y_pos + 12]
+
+        self.text_x = ICON_MARGIN_LEFT
+        self.icon_y = 75 + ICON_GAP * len(self.all)
+        self.bold_font = init.fonts["bold_font"]
+        self.icon_text = self.bold_font.render(name, 1, [255] * 3)
+        self.progress = 0
+        self.icon_x = self.text_x + self.icon_text.get_width() // 2 - 37 // 2
+        self.icon_dimensions = [
+            self.text_x,
+            self.icon_y,
+            self.icon_text.get_width(),
+            58 + self.icon_text.get_height(),
+        ]
+        self.bar_dimensions = [
+            self.text_x + self.icon_text.get_width() - 11,
+            self.icon_y + 18,
+            10,
+            40,
+        ]
+        self.dummy_text = self.bold_font.render(str(self.owned)[0], 1, (0, 0, 0))
+        self.bar_fill_dimensions = [
+            self.bar_dimensions[0],
+            self.bar_dimensions[1] + (self.progress - 40) // 5,
+            self.bar_dimensions[2],
+            self.bar_dimensions[3] - (self.progress - 40) // 5,
+        ]
+
         self.all.append(self)
 
     def get_scaled_image(self, image: pygame.Surface):
@@ -66,3 +101,65 @@ class AbilityPurchasable(ShopItem):
     def flash(self):
         """Perform the flash animation when the user cannot afford this powerup."""
         self.flash_sequence = 0
+
+    def draw_icon(self, win):
+        """Render the ability icons on the in-game sidebar."""
+        if variables.paused and variables.pause_menu == "shop":
+            return
+        self.dummy_text = self.bold_font.render(str(self.owned)[0], 1, (0, 0, 0))
+
+        if self.owned > 0 or self.progress > 0:
+            self.icon_text = self.bold_font.render(self.name, 1, [255] * 3)
+            self.owned_text = self.bold_font.render(str(self.owned), 1, [255] * 3)
+            win.blit(
+                init.sprites[SPRITE_NAMES[self.name]],
+                (self.icon_x, self.icon_y),
+            )
+        else:
+            self.icon_text = self.bold_font.render(self.name, 1, [128] * 3)
+            self.owned_text = self.bold_font.render("0", 1, [128] * 3)
+            win.blit(
+                init.sprites[SPRITE_NAMES[self.name] + "_bw"],
+                (self.icon_x, self.icon_y),
+            )
+        win.blit(self.icon_text, (self.text_x, self.icon_y + 58))
+        win.blit(
+            self.owned_text,
+            (
+                self.text_x
+                + self.icon_text.get_width()
+                - self.dummy_text.get_width()
+                + 5,
+                self.icon_y - 2,
+            ),
+        )
+        if self.progress > 0:
+            # Uncomment below to show powerup sprite hitboxes in game
+            # pygame.draw.rect(win, (0, 204, 255), self.bar_dimensions)
+            dims = self.bar_dimensions
+            if self.progress < dims[3]:
+                self.bar_fill_dimensions = [
+                    dims[0],
+                    dims[1] + dims[3] - self.progress,
+                    dims[2],
+                    self.progress,
+                ]
+            else:
+                self.bar_fill_dimensions = [
+                    dims[0],
+                    dims[1] + (self.progress - 40) // 5,
+                    dims[2],
+                    dims[3] - (self.progress - 40) // 5,
+                ]
+            pygame.draw.rect(win, (204, 204, 0), self.bar_fill_dimensions)
+
+    def activate(self, slav):
+        """Enables the ability and starts its timer."""
+        if self.progress == 0:
+            self.owned -= 1
+        if self.progress < 240:
+            self.progress += 1
+            slav.status_effects.add(self.name + "_power")
+        else:
+            self.progress = 0
+            slav.status_effects.remove(self.name + "_power")

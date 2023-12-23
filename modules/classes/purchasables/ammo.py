@@ -4,7 +4,7 @@ import pygame
 
 from modules import init
 from modules.constants import IMAGE_DIR
-from modules.classes.purchasables.shop_item import ShopItem
+from modules.classes.abstract import ShopItem
 
 
 class AmmoPurchasable(ShopItem):

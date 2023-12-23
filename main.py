@@ -4,13 +4,12 @@ import random
 import pygame
 
 from modules import setup, init, variables
-from modules.classes.ability import Ability
 from modules.classes.button import Button, Slider
 from modules.classes.effect import Effect
 from modules.classes.enemy import Enemy
 from modules.classes.player import Player
 from modules.classes.purchasables.weapon import Weapon
-from modules.classes.purchasables.ability import AbilityPurchasable
+from modules.classes.purchasables.ability import Ability
 from modules.classes.purchasables.ammo import AmmoPurchasable
 from modules.constants import (
     WIN_WIDTH,
@@ -102,7 +101,7 @@ def redraw_game_window():
             win.blit(sprites["back"], (16, WIN_HEIGHT - 16 - 64 - 16))
             for gun in Weapon.all:
                 gun.draw(win)
-            for powerup in AbilityPurchasable.all:
+            for powerup in Ability.all:
                 powerup.draw(win)
             if AmmoPurchasable.selected_ammo_idx is not None:
                 AmmoPurchasable.get_selected().draw(win)
@@ -140,8 +139,8 @@ def redraw_game_window():
             )
         win.blit(ammo_count_text, (20, 30))
     win.blit(money_count_text, (20, 10))
-    for consumable_icon in Ability.all:
-        consumable_icon.draw(win)
+    for ability in Ability.all:
+        ability.draw_icon(win)
     pygame.display.update()
 
 
@@ -158,11 +157,8 @@ AmmoPurchasable(
     (WIN_WIDTH - 16 - 176, WIN_HEIGHT // 8), "ammo_heavy", cost=49, owned=7, quantity=7
 )
 
-AbilityPurchasable((16 * 2 + 256, WIN_HEIGHT // 8), name="mayo", cost=50)
-AbilityPurchasable((16 * 3 + 256 + 224, WIN_HEIGHT // 8), name="beer", cost=60)
-
-Ability(20, 75, "mayo")
-Ability(20, 75 + 100, "beer")
+Ability((16 * 2 + 256, WIN_HEIGHT // 8), name="mayo", cost=50)
+Ability((16 * 3 + 256 + 224, WIN_HEIGHT // 8), name="beer", cost=60)
 
 
 def get_key_index(key_name: str) -> int:
@@ -190,7 +186,9 @@ def update_selected_gun(gun: Weapon) -> None:
 
 
 def handle_button_presses(mouse_pos: tuple[int, int]):
-    """Checks each button if it is hovered, and if so, activates it."""
+    """Checks each button if it is hovered, and if so, activates it.
+
+    Returns a boolean telling if any button was pressed."""
     for button in Button.all[variables.pause_menu]:
         # Check if the mouse is within the button's boundary
         if not button.is_hovered(mouse_pos):
@@ -202,7 +200,8 @@ def handle_button_presses(mouse_pos: tuple[int, int]):
         else:
             variables.slider_engaged = False
             button.do_action()  # Sends message that button was clicked
-        break
+        return True
+    return False
 
 
 def is_key_pressed(key_name: str):
@@ -238,7 +237,7 @@ def go_back_in_pause_menu():
         variables.pause_menu = variables.previous_pause_menu
 
 
-def attempt_fire() -> None:
+def attempt_fire():
     """Checks if it is possible to fire the weapon, and if so, calls the weapon fire method."""
     if (
         variables.shot_cooldown_time_passed >= variables.shot_cooldown
@@ -262,19 +261,113 @@ def check_joysticks():
     return _select_button_held
 
 
-# MAIN LOOP
-while variables.run:
-    clock.tick(27)  # Loops every 1/27 seconds (27 FPS)
-    variables.fps = clock.get_fps()
-    keys = pygame.key.get_pressed()
-    mouse_pos = pygame.mouse.get_pos()
+def is_select_button_pressed(event: pygame.event.Event):
+    """Checks if it was a mouse or controller event, and checks the corresponding select button."""
+    return (
+        event.button == 1
+        if event.type in (pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP)
+        else event.button == get_button_index("select")
+    )
 
-    # Detects window updates
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:  # If user clicks red 'x_pos' button to close
+
+def handle_mouse_clicks(mouse_pos: tuple[int, int]):
+    """Handles user mouse clicks."""
+
+    if variables.paused and handle_button_presses(mouse_pos):
+        return
+
+    # If clicked mouse in game
+    for ability in Ability.all:
+        if (
+            ability.is_hovered(mouse_pos, ability.icon_dimensions)
+            and ability.owned > 0
+            and ability.progress == 0
+        ):
+            ability.activate(slav)
+            Effect("mayo")
+            Effect("eating")
+            return
+    if cop_hovering_over is not None:
+        if variables.money_count >= 100:
+            variables.money_count -= 100
+            variables.wanted_level = 0
+            Effect("purchase")
+
+        else:
+            Effect("error")
+        return
+
+    # Clicking "enter shop" icon
+    if variables.pause_menu != "shop":
+        # If clicked shop icon
+        if (
+            STORE_ICON_PADDING <= mouse_pos[0] <= 128 - STORE_ICON_PADDING
+            and WIN_HEIGHT - STORE_ICON_PADDING - 128
+            < mouse_pos[1]
+            < WIN_HEIGHT - STORE_ICON_PADDING
+        ):
+            # Enter shop
+            variables.previous_pause_menu = variables.pause_menu
+            variables.pause_menu = "shop"
+        return
+
+    # If clicked mouse in shop
+    if (
+        16 < mouse_pos[0] < 16 + 128
+        and WIN_HEIGHT - 16 - 64 < mouse_pos[1] < WIN_HEIGHT - 16
+    ):
+        # Go back
+        variables.pause_menu = variables.previous_pause_menu
+        return
+    # If clicked on a gun
+    for gun_item in Weapon.all:
+        if not gun_item.is_hovered(mouse_pos):
+            continue
+        if gun_item.owned:
+            update_selected_gun(gun_item)
+            continue
+        if gun_item.affordable:
+            gun_item.owned = True
+            variables.money_count -= gun_item.cost
+            Effect("purchase")
+            update_selected_gun(gun_item)
+        else:
+            Effect("error")
+            gun_item.flash()
+    # If clicked on a powerup
+    for usable_powerup in Ability.all:
+        if not usable_powerup.is_hovered(mouse_pos):
+            continue
+        if usable_powerup.affordable:
+            usable_powerup.owned += 1
+            variables.money_count -= usable_powerup.cost
+            Effect("purchase")
+        else:
+            Effect("error")
+            usable_powerup.flash()
+    # If clicked on another purchasable
+    if AmmoPurchasable.selected_ammo_idx is None:
+        return
+    ammo_purchasable = AmmoPurchasable.get_selected()
+    if ammo_purchasable.is_hovered(mouse_pos):
+        if ammo_purchasable.affordable:
+            variables.money_count -= ammo_purchasable.cost
+            ammo_purchasable.owned += ammo_purchasable.quantity
+            Effect("purchase")
+            Effect("weapon_charge")
+        else:
+            Effect("error")
+            ammo_purchasable.flash()
+
+
+def handle_pygame_event(event: pygame.event.Event, mouse_pos: tuple[int, int]):
+    """Handles the given Pygame event."""
+    match (event.type):
+        case pygame.QUIT:
+            # If user clicks red 'x_pos' button to close
             variables.paused = True
             variables.pause_menu = "quit"
-        elif event.type in [pygame.KEYDOWN, pygame.JOYBUTTONDOWN]:
+        case pygame.KEYDOWN | pygame.JOYBUTTONDOWN:
             # If the attack key was pressed this frame
             user_input, get_index_function = (
                 (event.key, get_key_index)
@@ -283,8 +376,9 @@ while variables.run:
             )
             if user_input == get_index_function("attack"):
                 attempt_fire()
+                return
             # If escape was pressed this frame
-            elif (
+            if (
                 user_input == get_index_function("pause")
                 or variables.paused
                 and user_input == get_index_function("back")
@@ -296,7 +390,8 @@ while variables.run:
                     variables.paused = True
                     variables.pause_menu = "main"
                     pygame.mixer.pause()
-            elif user_input == get_index_function("open_shop"):
+                return
+            if user_input == get_index_function("open_shop"):
                 if variables.paused and variables.pause_menu == "shop":
                     variables.paused = False
                 else:
@@ -304,105 +399,34 @@ while variables.run:
                     variables.pause_menu = "shop"
                     variables.previous_pause_menu = "main"
         # Sound effect code
-        elif variables.firing and (
-            event.type == pygame.KEYUP
-            and event.key == get_key_index("attack")
-            or event.type == pygame.JOYBUTTONUP
-            and event.button == get_button_index("attack")
-        ):
-            variables.firing = False
+        case pygame.KEYUP:
+            if variables.firing and event.key == get_key_index("attack"):
+                variables.firing = False
+        case pygame.JOYBUTTONUP:
+            if variables.firing and event.button == get_button_index("attack"):
+                variables.firing = False
+        case pygame.MOUSEBUTTONDOWN | pygame.JOYBUTTONDOWN:
+            # If a mouse button is pressed this frame
+            if is_select_button_pressed(event):
+                handle_mouse_clicks(mouse_pos)
+        case pygame.MOUSEBUTTONUP | pygame.JOYBUTTONUP:
+            if not variables.slider_engaged:
+                return
+            if is_select_button_pressed(event):
+                variables.slider_engaged = False
+        case _:
+            pass
 
-        # If a mouse button is pressed this frame
-        if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1) or (
-            event.type == pygame.JOYBUTTONDOWN
-            and event.button == get_button_index("select")
-        ):
-            # If clicked mouse in pause menu
-            if variables.paused:
-                handle_button_presses(mouse_pos)
 
-            # If clicked mouse in game
-            else:
-                for powerup_consumable in Ability.all:
-                    if (
-                        powerup_consumable.is_hovered(mouse_pos)
-                        and powerup_consumable.owned > 0
-                        and powerup_consumable.progress == 0
-                    ):
-                        powerup_consumable.activate(slav)
-                        Effect("mayo")
-                        Effect("eating")
-                if cop_hovering_over is not None:
-                    if variables.money_count >= 100:
-                        variables.money_count -= 100
-                        variables.wanted_level = 0
-                        Effect("purchase")
+# MAIN LOOP
+while variables.run:
+    clock.tick(27)  # Loops every 1/27 seconds (27 FPS)
+    variables.fps = clock.get_fps()
+    keys = pygame.key.get_pressed()
+    mouse_pos = pygame.mouse.get_pos()
 
-                    else:
-                        Effect("error")
-            # If clicked mouse in shop
-            if variables.pause_menu == "shop":
-                if (
-                    16 < mouse_pos[0] < 16 + 128
-                    and WIN_HEIGHT - 16 - 64 < mouse_pos[1] < WIN_HEIGHT - 16
-                ):
-                    # Go back
-                    variables.pause_menu = variables.previous_pause_menu
-                else:
-                    # If clicked on a gun
-                    for gun_item in Weapon.all:
-                        if gun_item.is_hovered(mouse_pos):
-                            if gun_item.owned:
-                                update_selected_gun(gun_item)
-                            else:
-                                if gun_item.affordable:
-                                    gun_item.owned = True
-                                    variables.money_count -= gun_item.cost
-                                    Effect("purchase")
-                                    update_selected_gun(gun_item)
-                                else:
-                                    Effect("error")
-                                    gun_item.flash()
-                    # If clicked on a powerup
-                    for usable_powerup in AbilityPurchasable.all:
-                        if usable_powerup.is_hovered(mouse_pos):
-                            if usable_powerup.affordable:
-                                usable_powerup.owned += 1
-                                variables.money_count -= usable_powerup.cost
-                                Effect("purchase")
-                            else:
-                                Effect("error")
-                                usable_powerup.flash()
-                    # If clicked on another purchasable
-                    if AmmoPurchasable.selected_ammo_idx is not None:
-                        ammo_purchasable = AmmoPurchasable.get_selected()
-                        if ammo_purchasable.is_hovered(mouse_pos):
-                            if ammo_purchasable.affordable:
-                                variables.money_count -= ammo_purchasable.cost
-                                ammo_purchasable.owned += ammo_purchasable.quantity
-                                Effect("purchase")
-                                Effect("weapon_charge")
-                            else:
-                                Effect("error")
-                                ammo_purchasable.flash()
-
-            # If clicked shop icon
-            elif (
-                STORE_ICON_PADDING <= mouse_pos[0] <= 128 - STORE_ICON_PADDING
-                and WIN_HEIGHT - STORE_ICON_PADDING - 128
-                < mouse_pos[1]
-                < WIN_HEIGHT - STORE_ICON_PADDING
-            ):
-                # Enter shop
-                variables.previous_pause_menu = variables.pause_menu
-                variables.pause_menu = "shop"
-        elif variables.slider_engaged and (
-            event.type == pygame.MOUSEBUTTONUP
-            and event.button == 1
-            or event.type == pygame.JOYBUTTONUP
-            and event.button == get_button_index("select")
-        ):
-            variables.slider_engaged = False
+    for pygame_event in pygame.event.get():
+        handle_pygame_event(pygame_event, mouse_pos)
 
     # If dragging volume slider
     if variables.slider_engaged and (
@@ -445,9 +469,9 @@ while variables.run:
                 variables.time_passed_since_last_cop_spawned += 1 / 27
 
         # Continues the activation animation of each powerup if it has already been started
-        for powerup_consumable in Ability.all:
-            if powerup_consumable.progress > 0:
-                powerup_consumable.activate(slav)
+        for ability in Ability.all:
+            if ability.progress > 0:
+                ability.activate(slav)
 
         cop_hovering_over = None
         # If player touches any cop
@@ -465,8 +489,8 @@ while variables.run:
                     variables.score = 0
                     for ammo_purchasable in AmmoPurchasable.all:
                         ammo_purchasable.owned = ammo_purchasable.initial_owned_amount
-                    for powerup_consumable in Ability.all:
-                        powerup_consumable.progress = 0
+                    for ability in Ability.all:
+                        ability.progress = 0
                     AmmoPurchasable.selected_ammo_idx = None
                     variables.money_count = variables.settings.getint(
                         "Cheats", "start_money"
@@ -477,7 +501,6 @@ while variables.run:
                     variables.bullets = []
                     variables.drops = []
                     variables.selected_gun = None
-                    variables.mayo_power = False
                     cop_hovering_over = None
         # If player touches ammo drop
         for loot_drop in variables.drops:
@@ -516,7 +539,7 @@ while variables.run:
                 continue
             for cop in variables.cops:
                 if cop.is_hovered((fired_bullet.x_pos, fired_bullet.y_pos)):
-                    cop.hit()
+                    cop.hit(slav.status_effects)
                     variables.score += 1
                     variables.bullets.remove(fired_bullet)
                     break

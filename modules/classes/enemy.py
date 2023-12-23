@@ -71,18 +71,22 @@ class Enemy(Human):
             return
         self.x_pos += self.velocity * self.direction
 
-    def hit(self):
+    def hit(self, player_status_effects: set[str]):
         """Called when shot by bullet"""
         if variables.wanted_level == 0:
             variables.wanted_level += 1
         Effect("bullet_hit")
-        minus = variables.selected_gun.damage
-        if variables.mayo_power:  # Double damage taken when player has mayo power
-            minus *= 2
-        if variables.beer_power:  # Triple damage taken when player has beer power
-            minus *= 3
-        if self.health - minus > 0:
-            self.health -= minus
+        weapon_damage = variables.selected_gun.damage
+        if (
+            "mayo_power" in player_status_effects
+        ):  # Double damage taken when player has mayo power
+            weapon_damage *= 2
+        if (
+            "beer_power" in player_status_effects
+        ):  # Triple damage taken when player has beer power
+            weapon_damage *= 3
+        if self.health - weapon_damage > 0:
+            self.health -= weapon_damage
         else:
             if variables.wanted_level < 5:
                 variables.wanted_level += 1

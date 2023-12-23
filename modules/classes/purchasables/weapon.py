@@ -6,8 +6,8 @@ from modules import variables, init
 from modules.constants import IMAGE_DIR, INFINITE_AMMO
 from modules.classes.human import Human
 from modules.classes.effect import Effect
+from modules.classes.abstract import ShopItem
 from modules.classes.projectile import Projectile
-from modules.classes.purchasables.shop_item import ShopItem
 from modules.classes.purchasables.ammo import AmmoPurchasable
 
 
