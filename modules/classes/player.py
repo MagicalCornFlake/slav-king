@@ -11,11 +11,6 @@ from modules.classes.purchasables.weapon import Weapon, get_scaled_image_dimensi
 
 MAX_DIMENSIONS = (16 * 4, 9 * 4)
 
-GUN_SPRITES = {
-    gun.name: get_scaled_image_dimensions(gun.image_path, *MAX_DIMENSIONS)
-    for gun in Weapon.all
-}
-
 
 # S L A V
 class Player(Human):
@@ -29,6 +24,10 @@ class Player(Human):
         self.jumping = False
         self.status_effects = set()
         self.reset()
+        self.gun_sprites = {
+            gun.name: get_scaled_image_dimensions(gun.image_path, *MAX_DIMENSIONS)
+            for gun in Weapon.all
+        }
 
     def reset(self):
         """Resets all object properties to their initial state."""
@@ -59,7 +58,7 @@ class Player(Human):
             "draw_experimental_player_weapon"
         ):
             return
-        gun_sprite, dimensions = GUN_SPRITES[variables.selected_gun.name]
+        gun_sprite, dimensions = self.gun_sprites[variables.selected_gun.name]
         if self.direction == -1:
             gun_sprite = pygame.transform.flip(gun_sprite, True, False)
         gun_hitbox = [

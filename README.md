@@ -37,6 +37,26 @@ You must have Python 3 installed to play this game. The latest Python version is
 If you already have an older Python 3 version, the program should run fine.
 The game has only been tested on `3.11` so if you encounter any problems consider upgrading your Python installation.
 
+After installing python, you must install the required dependencies.
+This can be done using Pip and the provided `requirements.txt` file.
+Depending on your system, the exact commands may differ.
+Below are some suggestions that should work for the majority of users.
+
+Windows:
+
+```sh
+py -m pip install -r requirements.txt
+```
+
+Unix-based systems:
+
+```sh
+pip install -r requirements.txt
+```
+
+For the best results ensure that the `pip` package is up-to-date.
+On fresh installations, this is not always the case!
+
 To run the game, enter the `slav-king` directory and run the following command:
 
 ```sh
