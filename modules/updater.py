@@ -2,6 +2,7 @@
 
 import os
 import shutil
+import sys
 import tempfile
 import zipfile
 
@@ -16,7 +17,7 @@ HEADERS = {
 def log(*args, first_step=False, last_step=False, prefix="Done"):
     """Macro for calling the builtin `print` function."""
     if not first_step:
-        print(prefix + "!")
+        print(f"{prefix}!")
     print(*args, end=None if last_step else " ... ", flush=True)
 
 
@@ -67,13 +68,23 @@ def download_latest_version(repo_info):
 def ensure_latest_version():
     """Compares the latest version to the current version. Downloads updates as needed."""
     log("Checking for updates", first_step=True)
-    repo_info = get_repo_information()
+    try:
+        repo_info = get_repo_information()
+    except Exception as network_error:
+        log(
+            "Could not connect to the network. Continuing in offline mode.",
+            last_step=True,
+            prefix=network_error,
+        )
+        return
     latest_version = repo_info.get("name")
     if get_current_version() == latest_version:
         log("All up to date.", last_step=True)
         return
     log("Newer version available:", latest_version, last_step=True)
     download_latest_version(repo_info)
+    print("Restarting ...")
+    os.execl(sys.executable, f'"{sys.executable}"', *sys.argv)
 
 
 if __name__ == "__main__":
