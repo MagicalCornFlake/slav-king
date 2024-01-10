@@ -7,6 +7,11 @@ import sys
 from modules import variables, gui
 
 
+def restart_program():
+    """Restarts the system executable."""
+    os.execl(sys.executable, f'"{sys.executable}"', *sys.argv)
+
+
 def read_settings() -> configparser.ConfigParser:
     """Reads the user settings and returns them as a dictionary."""
     config = configparser.ConfigParser()
@@ -52,7 +57,7 @@ def ensure_singleton():
         dialog_reply = gui.ask_abort_retry_ignore("Already running", msg)
         if dialog_reply == "retry":
             # Restarts the program
-            os.execl(sys.executable, f'"{sys.executable}"', *sys.argv)
+            restart_program()
         elif dialog_reply == "abort":
             # Kills current instance
             sys.exit()

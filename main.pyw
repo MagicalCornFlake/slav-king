@@ -3,7 +3,7 @@ import random
 
 import pygame
 
-from modules import setup, init, variables, updater
+from modules import setup, init, variables, updater, gui
 from modules.classes.button import Button, Slider
 from modules.classes.effect import Effect
 from modules.classes.enemy import Enemy
@@ -578,6 +578,9 @@ def tick():
             # Updates high score if user has surpassed it
             variables.settings["Cheats"]["highscore"] = str(variables.score)
     redraw_game_window()
+
+
+gui.hide_root()
 
 
 while variables.run:

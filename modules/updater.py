@@ -2,13 +2,12 @@
 
 import os
 import shutil
-import sys
 import tempfile
 import zipfile
 
 import requests
 
-from modules import gui
+from modules import gui, setup
 
 REPOSITORY_TAGS_URL = "https://api.github.com/repos/kguzek/slav-king/tags"
 HEADERS = {
@@ -30,6 +29,19 @@ def get_current_version():
     with open("data/version.txt", "r", encoding="utf-8") as file:
         version = file.read()
     return version.strip()
+
+
+def get_version_int(version: str):
+    """Strips a version string of delimiters and returns an int."""
+    return int(version.lstrip("v").replace(".", ""))
+
+
+def is_later_version(first: str, second: str):
+    """Checks whether `first` is a version string representing a later version than `second`."""
+    try:
+        return get_version_int(first) > get_version_int(second)
+    except ValueError:
+        return False
 
 
 def get_repo_information():
@@ -64,7 +76,10 @@ def download_latest_version(repo_info):
         log(response.json(), last_step=True, prefix="Error")
         gui.show_popup(
             "Network error",
-            "Could not download the latest version from GitHub. Please download and extract it manually.",
+            (
+                "Could not download the latest version from GitHub. "
+                "Please download and extract it manually."
+            ),
             popup_type="error",
         )
         return
@@ -94,7 +109,9 @@ def ensure_latest_version():
         return
     latest_version = repo_info.get("name")
     current_version = get_current_version()
-    if current_version == latest_version:
+    if current_version == latest_version or is_later_version(
+        current_version, latest_version
+    ):
         gui.increment_progressbar(149.9)
         log("All up to date.", last_step=True)
         return
@@ -111,7 +128,7 @@ def ensure_latest_version():
         "Restart required",
         f"Successfully updated to version {latest_version}. Press OK to restart.",
     )
-    os.execl(sys.executable, f'"{sys.executable}"', *sys.argv)
+    setup.restart_program()
 
 
 if __name__ == "__main__":
