@@ -8,6 +8,8 @@ import zipfile
 
 import requests
 
+from modules import gui
+
 REPOSITORY_TAGS_URL = "https://api.github.com/repos/kguzek/slav-king/tags"
 HEADERS = {
     "Accept": "application/vnd.github.v3+json",
@@ -19,6 +21,8 @@ def log(*args, first_step=False, last_step=False, prefix="Done"):
     if not first_step:
         print(f"{prefix}!")
     print(*args, end=None if last_step else " ... ", flush=True)
+    gui.update_label(" ".join(args))
+    gui.increment_progressbar()
 
 
 def get_current_version():
@@ -53,12 +57,16 @@ def extract_archive(directory: str, archive_content: bytes, repo_version: str):
 
 def download_latest_version(repo_info):
     """Fetches the latest tag zipball to a temporary folder and extracts it."""
-    log("Downloading latest version", first_step=True)
     zipball_url = repo_info.get("zipball_url")
-    log("Fetching from", zipball_url)
+    log("Downloading latest version from", zipball_url, first_step=True)
     response = requests.get(zipball_url, headers=HEADERS, timeout=10)
     if response.status_code != 200:
         log(response.json(), last_step=True, prefix="Error")
+        gui.show_popup(
+            "Network error",
+            "Could not download the latest version from GitHub. Please download and extract it manually.",
+            popup_type="error",
+        )
         return
     with tempfile.TemporaryDirectory() as directory:
         extract_archive(directory, response.content, repo_info.get("name"))
@@ -67,23 +75,42 @@ def download_latest_version(repo_info):
 
 def ensure_latest_version():
     """Compares the latest version to the current version. Downloads updates as needed."""
+    gui.create_progressbar()
     log("Checking for updates", first_step=True)
     try:
         repo_info = get_repo_information()
-    except (requests.HTTPError, requests.ConnectionError) as network_error:
+    except (
+        requests.HTTPError,
+        requests.ConnectionError,
+        requests.exceptions.ReadTimeout,
+    ) as network_error:
+        error_message = "Could not connect to the network. Continuing in offline mode."
         log(
-            "Could not connect to the network. Continuing in offline mode.",
+            error_message,
             last_step=True,
             prefix=network_error.__class__.__name__,
         )
+        gui.show_popup("Network error", error_message, popup_type="warning")
         return
     latest_version = repo_info.get("name")
-    if get_current_version() == latest_version:
+    current_version = get_current_version()
+    if current_version == latest_version:
+        gui.increment_progressbar(149.9)
         log("All up to date.", last_step=True)
         return
-    log("Newer version available:", latest_version, last_step=True)
+    log(
+        "Newer version available:",
+        current_version,
+        "->",
+        latest_version,
+        last_step=True,
+    )
     download_latest_version(repo_info)
     print("Restarting ...")
+    gui.show_popup(
+        "Restart required",
+        f"Successfully updated to version {latest_version}. Press OK to restart.",
+    )
     os.execl(sys.executable, f'"{sys.executable}"', *sys.argv)
 
 
