@@ -70,11 +70,11 @@ def ensure_latest_version():
     log("Checking for updates", first_step=True)
     try:
         repo_info = get_repo_information()
-    except Exception as network_error:
+    except (requests.HTTPError, requests.ConnectionError) as network_error:
         log(
             "Could not connect to the network. Continuing in offline mode.",
             last_step=True,
-            prefix=network_error,
+            prefix=network_error.__class__.__name__,
         )
         return
     latest_version = repo_info.get("name")
