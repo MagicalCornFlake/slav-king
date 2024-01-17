@@ -2,4 +2,4 @@
 
 
 def set_cursor_pos(joystick) -> None:
-    pass
+    """No-op."""

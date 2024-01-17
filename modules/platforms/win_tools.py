@@ -6,10 +6,13 @@ from pygame.joystick import Joystick
 
 
 class Point(Structure):
+    """Object representing a pixel on the screen."""
+
     _fields_ = [("x", c_long), ("y", c_long)]
 
     @property
     def list(self):
+        """Point representation as a pair of coordinates."""
         return [self.x, self.y]
 
     def __repr__(self):
@@ -17,6 +20,7 @@ class Point(Structure):
 
 
 def get_cursor_pos() -> Point:
+    """Gets the mouse cursor position on the screen using the Windows system tools."""
     mouse_abs_pos = Point()
     windll.user32.GetCursorPos(byref(mouse_abs_pos))
     return mouse_abs_pos

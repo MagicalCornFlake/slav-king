@@ -23,9 +23,9 @@ class Ability(ShopItem):
 
     def __init__(self, pos: tuple[int, int], name: str, cost: int):
         super().__init__(pos, name, cost)
-        self.bold_font = init.fonts["bold_font"]
-        self.text = self.bold_font.render(f"{name} - ${cost}", 1, [255] * 3)
-        self.owned_text = self.bold_font.render("0", 1, [255] * 3)
+        bold_font = init.fonts["bold_font"]
+        self.text = bold_font.render(f"{name} - ${cost}", 1, [255] * 3)
+        self.owned_text = bold_font.render("0", 1, [255] * 3)
         self.flash_sequence = -1
         self.dimensions = [self.x_pos, self.y_pos, 224, 164]
         self.owned = 0
@@ -38,24 +38,23 @@ class Ability(ShopItem):
         self.owned_text_position = [self.x_pos + 16, self.y_pos + 12]
 
         self.text_x = ICON_MARGIN_LEFT
-        self.icon_y = 75 + ICON_GAP * len(self.all)
-        self.bold_font = init.fonts["bold_font"]
-        self.icon_text = self.bold_font.render(name, 1, [255] * 3)
+        self.icon_y = 80 + ICON_GAP * len(self.all)
+        icon_text = bold_font.render(f"{name} ({name[0]})", 1, [255] * 3)
         self.progress = 0
-        self.icon_x = self.text_x + self.icon_text.get_width() // 2 - 37 // 2
+        self.icon_x = self.text_x + icon_text.get_width() // 2 - 37 // 2
         self.icon_dimensions = [
             self.text_x,
             self.icon_y,
-            self.icon_text.get_width(),
-            58 + self.icon_text.get_height(),
+            icon_text.get_width(),
+            58 + icon_text.get_height(),
         ]
         self.bar_dimensions = [
-            self.text_x + self.icon_text.get_width() + 1,
+            self.text_x + icon_text.get_width() + 1,
             self.icon_y + 18,
             10,
             40,
         ]
-        self.dummy_text = self.bold_font.render(str(self.owned)[0], 1, (0, 0, 0))
+        self.dummy_text = bold_font.render(str(self.owned)[0], 1, (0, 0, 0))
         self.bar_fill_dimensions = [
             self.bar_dimensions[0],
             self.bar_dimensions[1] + (self.progress - 40) // 5,
@@ -81,7 +80,7 @@ class Ability(ShopItem):
 
     def draw(self, win):
         """Render the weapon sprite in the shop."""
-        self.owned_text = self.bold_font.render(str(self.owned), 1, [255] * 3)
+        self.owned_text = init.fonts["bold_font"].render(str(self.owned), 1, [255] * 3)
         self.owned_text_position = [self.x_pos + 16, self.y_pos + 12]
         if self.owned > 0:
             pygame.draw.rect(win, (72, 240, 112), self.dimensions)
@@ -109,33 +108,34 @@ class Ability(ShopItem):
         """Render the ability icons on the in-game sidebar."""
         if variables.paused and variables.pause_menu == "shop":
             return
-        self.dummy_text = self.bold_font.render(str(self.owned)[0], 1, (0, 0, 0))
+        self.dummy_text = init.fonts["bold_font"].render(
+            str(self.owned)[0], 1, (0, 0, 0)
+        )
 
         activation_keybinding = variables.settings["Keybindings"][
             "activate_" + self.name
         ]
         render_text = f"{self.name} ({activation_keybinding})"
+        bold_font = init.fonts["bold_font"]
         if self.owned > 0 or self.progress > 0:
-            self.icon_text = self.bold_font.render(render_text, 1, [255] * 3)
-            self.owned_text = self.bold_font.render(str(self.owned), 1, [255] * 3)
+            icon_text = bold_font.render(render_text, 1, [255] * 3)
+            self.owned_text = bold_font.render(str(self.owned), 1, [255] * 3)
             win.blit(
                 init.sprites[SPRITE_NAMES[self.name]],
                 (self.icon_x, self.icon_y),
             )
         else:
-            self.icon_text = self.bold_font.render(render_text, 1, [128] * 3)
-            self.owned_text = self.bold_font.render("0", 1, [128] * 3)
+            icon_text = bold_font.render(render_text, 1, [128] * 3)
+            self.owned_text = bold_font.render("0", 1, [128] * 3)
             win.blit(
                 init.sprites[SPRITE_NAMES[self.name] + "_bw"],
                 (self.icon_x, self.icon_y),
             )
-        win.blit(self.icon_text, (self.text_x, self.icon_y + 58))
+        win.blit(icon_text, (self.text_x, self.icon_y + 58))
         win.blit(
             self.owned_text,
             (
-                self.text_x
-                + self.icon_text.get_width()
-                - self.dummy_text.get_width() * 2,
+                self.text_x + icon_text.get_width() - self.dummy_text.get_width() * 2,
                 self.icon_y - 2,
             ),
         )

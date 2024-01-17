@@ -22,9 +22,9 @@ from modules.constants import (
 )
 
 try:
-    from modules import win_tools as os_tools
+    from modules.platforms import win_tools as os_tools
 except ImportError:
-    from modules import posix_tools as os_tools
+    from modules.platforms import posix_tools as os_tools
 
 updater.ensure_latest_version()
 setup.ensure_singleton()
