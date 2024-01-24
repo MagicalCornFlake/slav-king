@@ -3,7 +3,7 @@
 import pygame
 
 from modules import variables
-from modules.constants import WIN_WIDTH, WIN_HEIGHT, IMAGE_DIR
+from modules.constants import WIN_WIDTH, WIN_HEIGHT, IMAGE_DIR, FRAME_WIDTH, FRAME_GAP
 from modules.classes.button import Button, Slider
 from modules.classes.purchasables.weapon import Weapon
 
@@ -163,7 +163,7 @@ def init_pause_buttons():
 def init_weapons():
     """Initialises the weapon instances for each purchasable gun."""
     Weapon(
-        (16, WIN_HEIGHT // 8),
+        (FRAME_GAP // 2, WIN_HEIGHT // 8),
         name="Beretta",
         cost=50,
         damage=20,
@@ -171,7 +171,7 @@ def init_weapons():
         full_auto=False,
     )
     Weapon(
-        (32, WIN_HEIGHT // 2),
+        (FRAME_GAP, WIN_HEIGHT // 2),
         name="Deagle",
         cost=150,
         damage=60,
@@ -179,7 +179,7 @@ def init_weapons():
         full_auto=False,
     )
     Weapon(
-        (WIN_WIDTH // 2 - 128, WIN_HEIGHT // 2),
+        ((WIN_WIDTH - FRAME_WIDTH) // 2, WIN_HEIGHT // 2),
         name="MP5",
         cost=200,
         damage=30,
@@ -187,7 +187,7 @@ def init_weapons():
         full_auto=True,
     )
     Weapon(
-        (WIN_WIDTH - 256 - 32, WIN_HEIGHT // 2),
+        (WIN_WIDTH - FRAME_GAP - FRAME_WIDTH, WIN_HEIGHT // 2),
         name="AK-47",
         cost=300,
         damage=50,

@@ -3,10 +3,11 @@
 import pygame
 
 from modules import variables, init
-from modules.constants import WIN_WIDTH
+from modules.constants import WIN_WIDTH, RED, GREEN
 from modules.classes.human import Human, get_sprite_frames
 from modules.classes.purchasables.ability import Ability
-from modules.classes.purchasables.weapon import Weapon, get_scaled_image_dimensions
+from modules.classes.purchasables.weapon import Weapon
+from modules.classes.abstract import scale_image
 
 
 MAX_DIMENSIONS = (16 * 4, 9 * 4)
@@ -25,7 +26,7 @@ class Player(Human):
         self.status_effects = set()
         self.reset()
         self.gun_sprites = {
-            gun.name: get_scaled_image_dimensions(gun.image_path, *MAX_DIMENSIONS)
+            gun.name: scale_image(gun.image_path, *MAX_DIMENSIONS)
             for gun in Weapon.all
         }
 
@@ -53,7 +54,7 @@ class Player(Human):
         win.blit(frames[frame_idx], (self.x_pos, self.y_pos))
         dev_settings = variables.settings["Developer Options"]
         if dev_settings.getboolean("show_player_hitbox"):
-            pygame.draw.rect(win, (0, 255, 0), self.hitbox, 2)
+            pygame.draw.rect(win, GREEN, self.hitbox, 2)
         if variables.selected_gun is None or not dev_settings.getboolean(
             "draw_experimental_player_weapon"
         ):
@@ -104,7 +105,7 @@ class Player(Human):
         # Stops all sound effects
         pygame.mixer.stop()
         self.reset()
-        text = init.fonts["large_font"].render("BUSTED", 1, (255, 0, 0))
+        text = init.fonts["large_font"].render("BUSTED", 1, RED)
         win.blit(text, ((WIN_WIDTH // 2) - (text.get_width() // 2), 200))
         pygame.display.update()
         i = 0

@@ -1,4 +1,4 @@
-import configparser
+"""Module containing custom UI button elements."""
 
 import pygame
 
@@ -43,7 +43,8 @@ class Button(Clickable):
     def initialise_dimensions(self, sibling_buttons: list):
         """Initialises the sprite dimensions."""
         if len(sibling_buttons) == 2:
-            # The index of the button is either 1 or 0, which means its x_centre is the window width * either 1/4 or 3/4
+            # The index of the button is either 1 or 0, which means its x_centre
+            # is the window width * either 1/4 or 3/4
             x_centre = WIN_WIDTH * (1 + 2 * sibling_buttons.index(self)) // 4
             # The x_pos position is the x_pos centre minus half of the button's width
             # The y_pos position is almost at the halfway point of the window's height
@@ -56,7 +57,8 @@ class Button(Clickable):
                 50,
             ]
         else:
-            # The index of the button is 0-2, which means its y_centre is the window height * either 3/8, 4/8 or 5/8
+            # The index of the button is 0-2, which means its y_centre is the
+            # window height * either 3/8, 4/8 or 5/8
             y_centre = WIN_HEIGHT * (3 + sibling_buttons.index(self)) // 8
             # The x_pos position is at the halfway point of the window's width
             # The y_pos position is either at 1/3, 1/2 or 2/3 of the window's height
@@ -76,10 +78,10 @@ class Button(Clickable):
         pygame.draw.rect(win, [bg_shade] * 3, self.dimensions)
         # Renders button outline graphic
         pygame.draw.rect(win, (0, 0, 0), self.dimensions, 2)
-        text_position = [
+        text_position = (
             self.dimensions[0] + self.dimensions[2] // 2 - self.text.get_width() // 2,
             self.dimensions[1] + self.dimensions[3] // 2 - self.text.get_height() // 2,
-        ]
+        )
         win.blit(self.text, text_position)
 
     def do_action(self):

@@ -3,8 +3,8 @@
 import pygame
 
 from modules import init, variables
-from modules.constants import IMAGE_DIR
-from modules.classes.abstract import ShopItem
+from modules.constants import IMAGE_DIR, WHITE, FRAME_WIDTH, FRAME_HEIGHT
+from modules.classes.abstract import ShopItem, scale_image, centre_image
 from modules.classes.effect import Effect
 
 ICON_MARGIN_LEFT = 20
@@ -24,22 +24,20 @@ class Ability(ShopItem):
     def __init__(self, pos: tuple[int, int], name: str, cost: int):
         super().__init__(pos, name, cost)
         bold_font = init.fonts["bold_font"]
-        self.text = bold_font.render(f"{name} - ${cost}", 1, [255] * 3)
-        self.owned_text = bold_font.render("0", 1, [255] * 3)
-        self.flash_sequence = -1
-        self.dimensions = [self.x_pos, self.y_pos, 224, 164]
-        self.owned = 0
-        image = pygame.image.load(f"{IMAGE_DIR}icon_{name}.png")
-        self.image = self.get_scaled_image(image)
-        self.text_position = [
-            self.x_pos + self.dimensions[2] // 2 - self.text.get_width() // 2,
-            self.y_pos + 144 - 10,
+        self.dimensions = [
+            self.x_pos,
+            self.y_pos,
+            FRAME_WIDTH * 3 // 4,
+            FRAME_HEIGHT,
         ]
-        self.owned_text_position = [self.x_pos + 16, self.y_pos + 12]
+        self.owned = 0
+        self.image, image_dimensions = scale_image(f"{IMAGE_DIR}icon_{name}.png")
+        self.image_position = centre_image(image_dimensions, self.dimensions)
+        self.text, self.text_position = self.get_text_position(f"{name} - ${cost}")
 
         self.text_x = ICON_MARGIN_LEFT
         self.icon_y = 80 + ICON_GAP * len(self.all)
-        icon_text = bold_font.render(f"{name} ({name[0]})", 1, [255] * 3)
+        icon_text = bold_font.render(f"{name} ({name[0]})", 1, WHITE)
         self.progress = 0
         self.icon_x = self.text_x + icon_text.get_width() // 2 - 37 // 2
         self.icon_dimensions = [
@@ -55,54 +53,26 @@ class Ability(ShopItem):
             40,
         ]
         self.dummy_text = bold_font.render(str(self.owned)[0], 1, (0, 0, 0))
+        bar_vertical_offset = (self.progress - 40) // 5
         self.bar_fill_dimensions = [
             self.bar_dimensions[0],
-            self.bar_dimensions[1] + (self.progress - 40) // 5,
+            self.bar_dimensions[1] + bar_vertical_offset,
             self.bar_dimensions[2],
-            self.bar_dimensions[3] - (self.progress - 40) // 5,
+            self.bar_dimensions[3] - bar_vertical_offset,
         ]
 
         self.all.append(self)
 
-    def get_scaled_image(self, image: pygame.Surface):
-        """Scales the given image such that the image fits within the shop item frame."""
-        width = image.get_width()
-        height = image.get_height()
-        new_width = 116 / height * width
-        new_height = 116
-        self.hitbox = [
-            self.x_pos + (self.dimensions[2] - new_width) // 2,
-            self.y_pos + (144 - new_height) // 2,
-            new_width,
-            new_height,
-        ]
-        return pygame.transform.scale(image, (new_width, new_height))
-
     def draw(self, win):
         """Render the weapon sprite in the shop."""
-        self.owned_text = init.fonts["bold_font"].render(str(self.owned), 1, [255] * 3)
-        self.owned_text_position = [self.x_pos + 16, self.y_pos + 12]
+        owned_text = self.bold_font.render(str(self.owned), 1, WHITE)
+        owned_text_position = (self.x_pos + 16, self.y_pos + 12)
+        super().draw(win)
         if self.owned > 0:
-            pygame.draw.rect(win, (72, 240, 112), self.dimensions)
-            pygame.draw.rect(win, [255] * 3, self.dimensions, 5)
-        elif self.affordable:
-            pygame.draw.rect(win, (0, 255, 0), self.dimensions, 5)
-        if self.flash_sequence >= 0:
-            self.flash_sequence += 0.5
-            if self.flash_sequence // 2 != self.flash_sequence / 2:
-                pygame.draw.rect(win, (255, 96, 96), self.dimensions)
-                pygame.draw.rect(win, (255, 0, 0), self.dimensions, 5)
-        if self.flash_sequence >= 6:
-            self.flash_sequence = -1
-        win.blit(self.image, (self.hitbox[:2]))
+            self.draw_white_border(win)
+        win.blit(self.image, self.image_position)
         win.blit(self.text, self.text_position)
-        win.blit(self.owned_text, self.owned_text_position)
-        # Uncomment below to show powerup sprite hitboxes in shop
-        # pygame.draw.rect(win, (255, 0, 0), self.hitbox, 1)
-
-    def flash(self):
-        """Perform the flash animation when the user cannot afford this powerup."""
-        self.flash_sequence = 0
+        win.blit(owned_text, owned_text_position)
 
     def draw_icon(self, win):
         """Render the ability icons on the in-game sidebar."""
@@ -118,22 +88,22 @@ class Ability(ShopItem):
         render_text = f"{self.name} ({activation_keybinding})"
         bold_font = init.fonts["bold_font"]
         if self.owned > 0 or self.progress > 0:
-            icon_text = bold_font.render(render_text, 1, [255] * 3)
-            self.owned_text = bold_font.render(str(self.owned), 1, [255] * 3)
+            icon_text = bold_font.render(render_text, 1, WHITE)
+            owned_text = bold_font.render(str(self.owned), 1, WHITE)
             win.blit(
                 init.sprites[SPRITE_NAMES[self.name]],
                 (self.icon_x, self.icon_y),
             )
         else:
             icon_text = bold_font.render(render_text, 1, [128] * 3)
-            self.owned_text = bold_font.render("0", 1, [128] * 3)
+            owned_text = bold_font.render("0", 1, [128] * 3)
             win.blit(
                 init.sprites[SPRITE_NAMES[self.name] + "_bw"],
                 (self.icon_x, self.icon_y),
             )
         win.blit(icon_text, (self.text_x, self.icon_y + 58))
         win.blit(
-            self.owned_text,
+            owned_text,
             (
                 self.text_x + icon_text.get_width() - self.dummy_text.get_width() * 2,
                 self.icon_y - 2,

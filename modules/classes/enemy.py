@@ -5,7 +5,14 @@ import random
 import pygame
 
 from modules import variables
-from modules.constants import WIN_WIDTH, WIN_HEIGHT, LOOT_TABLE, MAX_RENDERED_DROPS
+from modules.constants import (
+    WIN_WIDTH,
+    WIN_HEIGHT,
+    LOOT_TABLE,
+    MAX_RENDERED_DROPS,
+    RED,
+    BLUE,
+)
 from modules.classes.effect import Effect
 from modules.classes.loot_drop import LootDrop
 from modules.classes.human import Human, get_sprite_frames
@@ -43,16 +50,14 @@ class Enemy(Human):
         if self.velocity != 0 and not variables.paused:
             self.animation_stage += 1
         # Drawing health bar
-        pygame.draw.rect(
-            win, (255, 0, 0), (self.hitbox[0], self.hitbox[1] - 35, 100, 20)
-        )
+        pygame.draw.rect(win, RED, (self.hitbox[0], self.hitbox[1] - 35, 100, 20))
         pygame.draw.rect(
             win, (0, 128, 0), (self.hitbox[0], self.hitbox[1] - 35, self.health, 20)
         )
         self.sprite_area = [self.x_pos, self.y_pos, 256, 256]
         if variables.settings.getboolean("Developer Options", "show_cop_hitboxes"):
-            pygame.draw.rect(win, (255, 0, 0), self.hitbox, 2)
-            pygame.draw.rect(win, (0, 0, 255), self.sprite_area, 2)
+            pygame.draw.rect(win, RED, self.hitbox, 2)
+            pygame.draw.rect(win, BLUE, self.sprite_area, 2)
 
     def within_range_of(self, target: Human):
         """Checks if the distance to the target is close enough to hit."""

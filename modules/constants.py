@@ -32,3 +32,12 @@ INFINITE_AMMO = False
 
 # After 50 drops, the oldest ones will start to disappear
 MAX_RENDERED_DROPS = 50
+
+FRAME_WIDTH = 16 * 16
+FRAME_HEIGHT = 9 * 16 + 20
+FRAME_GAP = 32
+
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)

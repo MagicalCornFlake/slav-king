@@ -19,6 +19,9 @@ from modules.constants import (
     STORE_ICON_PADDING,
     INFINITE_AMMO,
     GOD_MODE,
+    WHITE,
+    FRAME_WIDTH,
+    FRAME_GAP,
 )
 
 try:
@@ -63,20 +66,20 @@ def redraw_game_window():
     for bullet in variables.bullets:
         bullet.draw(win)
     slav.draw(win)
-    score_text = fonts["bold_font"].render(f"score: {variables.score}", 1, [255] * 3)
+    score_text = fonts["bold_font"].render(f"score: {variables.score}", 1, WHITE)
     highscore = variables.settings["Cheats"]["highscore"]
-    highscore_text = fonts["bold_font"].render(f"highscore: {highscore}", 1, [255] * 3)
+    highscore_text = fonts["bold_font"].render(f"highscore: {highscore}", 1, WHITE)
     fps_byte = round(variables.fps / 27) * 255
     fps_colour = (255 - fps_byte, fps_byte, 0)
     fps_counter_text = fonts["bold_font"].render(
         f"{variables.fps:.1f} FPS", 1, fps_colour
     )
     money_count_text = fonts["bold_font"].render(
-        f"money: ${variables.money_count}", 1, [255] * 3
+        f"money: ${variables.money_count}", 1, WHITE
     )
-    paused_text = fonts["big_font"].render("PAUSED", 1, [255] * 3)
+    paused_text = fonts["big_font"].render("PAUSED", 1, WHITE)
     paused_text_outline = fonts["big_outline_font"].render("PAUSED", 1, (0, 0, 0))
-    quit_text = fonts["big_font"].render("Are you sure you want to quit?", 1, [255] * 3)
+    quit_text = fonts["big_font"].render("Are you sure you want to quit?", 1, WHITE)
     for filled_star in range(1, variables.wanted_level + 1):
         win.blit(
             sprites["star_filled"],
@@ -129,12 +132,10 @@ def redraw_game_window():
     win.blit(fps_counter_text, (WIN_WIDTH - fps_counter_text.get_width() - 20, 50))
     if AmmoPurchasable.selected_ammo_idx is not None:
         if INFINITE_AMMO:
-            ammo_count_text = fonts["bold_font"].render("ammo: ∞", 1, [255] * 3)
+            ammo_count_text = fonts["bold_font"].render("ammo: ∞", 1, WHITE)
         else:
             ammo_count = AmmoPurchasable.get_selected().owned
-            ammo_count_text = fonts["bold_font"].render(
-                f"ammo: {ammo_count}", 1, [255] * 3
-            )
+            ammo_count_text = fonts["bold_font"].render(f"ammo: {ammo_count}", 1, WHITE)
         win.blit(ammo_count_text, (20, 30))
     win.blit(money_count_text, (20, 10))
     for ability_icon in Ability.all:
@@ -149,14 +150,26 @@ init.init_weapons()
 slav = Player(128, WIN_HEIGHT - 100 - 256 + 64, 256, 256)
 
 AmmoPurchasable(
-    (WIN_WIDTH - 16 - 176, WIN_HEIGHT // 8), "ammo_light", cost=25, owned=20, quantity=5
+    (WIN_WIDTH - (FRAME_GAP * 2 + FRAME_WIDTH * 3) // 4, WIN_HEIGHT // 8),
+    "ammo_light",
+    cost=25,
+    owned=20,
+    quantity=5,
 )
 AmmoPurchasable(
-    (WIN_WIDTH - 16 - 176, WIN_HEIGHT // 8), "ammo_heavy", cost=49, owned=7, quantity=7
+    (WIN_WIDTH - (FRAME_GAP * 2 + FRAME_WIDTH * 3) // 4, WIN_HEIGHT // 8),
+    "ammo_heavy",
+    cost=49,
+    owned=7,
+    quantity=7,
 )
 
-Ability((16 * 2 + 256, WIN_HEIGHT // 8), name="mayo", cost=50)
-Ability((16 * 3 + 256 + 224, WIN_HEIGHT // 8), name="beer", cost=60)
+Ability((FRAME_GAP * 3 // 2 + FRAME_WIDTH, WIN_HEIGHT // 8), name="mayo", cost=50)
+Ability(
+    (FRAME_GAP * 5 // 2 + FRAME_WIDTH + Ability.all[0].dimensions[2], WIN_HEIGHT // 8),
+    name="beer",
+    cost=60,
+)
 
 
 def get_key_index(key_name: str) -> int:
@@ -189,7 +202,7 @@ def handle_button_presses(mouse_pos: tuple[int, int]):
     Returns a boolean telling if any button was pressed."""
     for button in Button.all[variables.pause_menu]:
         # Check if the mouse is within the button's boundary
-        if not button.is_hovered(mouse_pos):
+        if not button.contains_point(mouse_pos):
             continue
         if isinstance(button, Slider):
             variables.slider_engaged = True
@@ -277,7 +290,7 @@ def handle_mouse_clicks(mouse_pos: tuple[int, int]):
     # If clicked mouse in game
     for ability in Ability.all:
         if (
-            ability.is_hovered(mouse_pos, ability.icon_dimensions)
+            ability.contains_point(mouse_pos, ability.icon_dimensions)
             and ability.owned > 0
             and ability.progress == 0
         ):
@@ -317,7 +330,7 @@ def handle_mouse_clicks(mouse_pos: tuple[int, int]):
         return
     # If clicked on a gun
     for gun_item in Weapon.all:
-        if not gun_item.is_hovered(mouse_pos):
+        if not gun_item.contains_point(mouse_pos):
             continue
         if gun_item.owned:
             update_selected_gun(gun_item)
@@ -332,7 +345,7 @@ def handle_mouse_clicks(mouse_pos: tuple[int, int]):
             gun_item.flash()
     # If clicked on a powerup
     for usable_powerup in Ability.all:
-        if not usable_powerup.is_hovered(mouse_pos):
+        if not usable_powerup.contains_point(mouse_pos):
             continue
         if usable_powerup.affordable:
             usable_powerup.owned += 1
@@ -345,7 +358,7 @@ def handle_mouse_clicks(mouse_pos: tuple[int, int]):
     if AmmoPurchasable.selected_ammo_idx is None:
         return
     ammo_purchasable = AmmoPurchasable.get_selected()
-    if ammo_purchasable.is_hovered(mouse_pos):
+    if ammo_purchasable.contains_point(mouse_pos):
         if ammo_purchasable.affordable:
             variables.money_count -= ammo_purchasable.cost
             ammo_purchasable.owned += ammo_purchasable.quantity
@@ -428,7 +441,7 @@ def cycle_cops(mouse_pos: tuple[int, int]):
     for cop in variables.cops:
         # If any bullet touches any cop
         for fired_bullet in variables.bullets:
-            if not cop.is_hovered((fired_bullet.x_pos, fired_bullet.y_pos)):
+            if not cop.contains_point((fired_bullet.x_pos, fired_bullet.y_pos)):
                 continue
             cop.hit(slav.status_effects)
             variables.score += 1
@@ -437,7 +450,7 @@ def cycle_cops(mouse_pos: tuple[int, int]):
 
         if variables.wanted_level == 0:
             continue
-        if cop.is_hovered(mouse_pos):
+        if cop.contains_point(mouse_pos):
             variables.cop_hovering_over = mouse_pos
         if GOD_MODE or not cop.within_range_of(slav) or cop.animation_stage < 30:
             continue
