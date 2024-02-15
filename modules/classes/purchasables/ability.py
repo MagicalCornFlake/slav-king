@@ -35,31 +35,34 @@ class Ability(ShopItem):
         self.image_position = centre_image(image_dimensions, self.dimensions)
         self.text, self.text_position = self.get_text_position(f"{name} - ${cost}")
 
-        self.text_x = ICON_MARGIN_LEFT
         self.icon_y = 80 + ICON_GAP * len(self.all)
-        icon_text = bold_font.render(f"{name} ({name[0]})", 1, WHITE)
+        self.text_dimensions = (
+            ICON_MARGIN_LEFT,
+            self.icon_y + init.sprites[SPRITE_NAMES[self.name]].get_height() + 10,
+        )
+        icon_text = bold_font.render(f"[{name[0]}] {name}", 1, WHITE)
         self.progress = 0
-        self.icon_x = self.text_x + icon_text.get_width() // 2 - 37 // 2
-        self.icon_dimensions = [
-            self.text_x,
+        self.icon_dimensions = (
+            self.text_dimensions[0],
             self.icon_y,
             icon_text.get_width(),
-            58 + icon_text.get_height(),
-        ]
-        self.bar_dimensions = [
-            self.text_x + icon_text.get_width() + 1,
+            self.text_dimensions[1] + icon_text.get_height() - self.icon_y,
+        )
+        self.icon_x = self.text_dimensions[0] + (self.icon_dimensions[2] - 37) // 2
+        self.bar_dimensions = (
+            self.text_dimensions[0] + self.icon_dimensions[2] + 1,
             self.icon_y + 18,
             10,
             40,
-        ]
+        )
         self.dummy_text = bold_font.render(str(self.owned)[0], 1, (0, 0, 0))
         bar_vertical_offset = (self.progress - 40) // 5
-        self.bar_fill_dimensions = [
+        self.bar_fill_dimensions = (
             self.bar_dimensions[0],
             self.bar_dimensions[1] + bar_vertical_offset,
             self.bar_dimensions[2],
             self.bar_dimensions[3] - bar_vertical_offset,
-        ]
+        )
 
         self.all.append(self)
 
@@ -82,10 +85,8 @@ class Ability(ShopItem):
             str(self.owned)[0], 1, (0, 0, 0)
         )
 
-        activation_keybinding = variables.settings["Keybindings"][
-            "activate_" + self.name
-        ]
-        render_text = f"{self.name} ({activation_keybinding})"
+        activation_keybind = variables.settings["Keybindings"]["activate_" + self.name]
+        render_text = f"[{activation_keybind}] {self.name}"
         bold_font = init.fonts["bold_font"]
         if self.owned > 0 or self.progress > 0:
             icon_text = bold_font.render(render_text, 1, WHITE)
@@ -101,11 +102,24 @@ class Ability(ShopItem):
                 init.sprites[SPRITE_NAMES[self.name] + "_bw"],
                 (self.icon_x, self.icon_y),
             )
-        win.blit(icon_text, (self.text_x, self.icon_y + 58))
+        # pygame.draw.rect(win, (255, 0, 0), self.icon_dimensions, 1)
+        # pygame.draw.rect(
+        #     win,
+        #     (0, 255, 0),
+        #     (
+        #         *self.text_dimensions,
+        #         self.icon_dimensions[2],
+        #         self.icon_dimensions[3] - self.text_dimensions[1] + self.icon_y,
+        #     ),
+        #     1,
+        # )s
+        win.blit(icon_text, self.text_dimensions)
         win.blit(
             owned_text,
             (
-                self.text_x + icon_text.get_width() - self.dummy_text.get_width() * 2,
+                self.text_dimensions[0]
+                + self.icon_dimensions[2]
+                - self.dummy_text.get_width() * 2,
                 self.icon_y - 2,
             ),
         )
