@@ -60,7 +60,7 @@ On fresh installations, this is not always the case!
 To run the game, enter the `slav-king` directory and run the following command:
 
 ```sh
-python main.py
+python main.pyw
 ```
 
 ## Hardware support
@@ -69,6 +69,16 @@ The game currently requires a keyboard and mouse to play to its full extent.
 In the future, it is planned to only require a keyboard by implementing keyboard shortcuts for all needed tasks.
 Additionally, for Windows users, there is controller support in the form of button and joystick bindings.
 For tasks that require the mouse, the right stick can be used to artificially move the cursor (WIP solution).
+
+## Supported command line arguments
+
+These switches may be appended to the command when running the app from a terminal or console.
+
+```sh
+python main.pyw [...]
+```
+
+1. `-s` or `--skip-update-check`: Doesn't perform the automatic update check on startup. Effectively an 'offline mode'.
 
 ## Planned changes
 

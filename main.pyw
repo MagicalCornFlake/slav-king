@@ -3,7 +3,7 @@ import random
 
 import pygame
 
-from modules import setup, init, variables, updater, gui
+from modules import setup, init, variables, updater, gui, commandline
 from modules.classes.button import Button, Slider
 from modules.classes.effect import Effect
 from modules.classes.enemy import Enemy
@@ -29,7 +29,8 @@ try:
 except ImportError:
     from modules.platforms import posix_tools as os_tools
 
-updater.ensure_latest_version()
+if 'no-update' not in commandline.get_run_arguments():
+    updater.ensure_latest_version()
 setup.ensure_singleton()
 setup.read_settings()
 win = init.init_window()
