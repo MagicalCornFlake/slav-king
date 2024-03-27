@@ -1,5 +1,7 @@
 """Module containing custom UI button elements."""
 
+from typing import Callable
+
 import pygame
 
 from modules import variables, init
@@ -16,8 +18,7 @@ class Button(Clickable):
         self,
         text: str,
         sections: str | list[str],
-        next_menu: str = None,
-        on_click=None,
+        on_click: str | Callable[["Button"], None],
         selected=False,
     ):
         self.text_message = text
@@ -25,13 +26,12 @@ class Button(Clickable):
         self.text = self.standard_font.render(text, 1, (0, 0, 0))
         self.dimensions = []
         self.selected = selected
-        if on_click is None:
-            if next_menu is not None:
+        if isinstance(on_click, str):
 
-                def callback(*_):
-                    variables.pause_menu = next_menu
+            def callback(_: "Button"):
+                variables.pause_menu = on_click
 
-                self.on_click = callback
+            self.on_click = callback
         else:
             self.on_click = on_click
         if isinstance(sections, str):
@@ -91,12 +91,19 @@ class Button(Clickable):
         self.on_click(self)
 
 
+def on_click_slider(_: Button):
+    """The `on_click` method of the Button class should never be called if the object is a Slider"""
+    raise RuntimeError(
+        "Illegal invocation of `Slider.on_click` (this should never be called)"
+    )
+
+
 # SLIDER CODE
 class Slider(Button):
     """Child of `Button` class that has slider functionality instead of simple clicking."""
 
     def __init__(self, text, sections: str | list[str]):
-        super().__init__(text, sections)
+        super().__init__(text, sections, on_click_slider)
         self.label_text = text
         self.text = None
         self.slider_dimensions = None

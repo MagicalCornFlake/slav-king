@@ -137,24 +137,24 @@ def init_pause_buttons():
     def quit_game(*_):
         variables.run = False
 
-    Button("resume [ESC]", "main", on_click=unpause)
-    Button("options...", "main", next_menu="options")
-    Button("quit", "main", next_menu="quit")
-    Button("music options...", "options", next_menu="volume")
-    Button("developer options...", "options", next_menu="dev")
+    Button("resume [ESC]", "main", unpause)
+    Button("options...", "main", "options")
+    Button("quit", "main", "quit")
+    Button("music options...", "options", "volume")
+    Button("developer options...", "options", "dev")
     Slider("volume: {vol}", "volume")
     Button(
         "mute background music",
         "volume",
-        on_click=toggle_mute,
+        toggle_mute,
         selected=variables.settings.getboolean("General", "muted"),
     )
-    Button("back... [ESC]", "volume", next_menu="options")
-    Button("toggle player hitbox", "dev", on_click=toggle_slav_hitbox)
-    Button("toggle enemy hitboxes", "dev", on_click=toggle_cop_hitbox)
-    Button("back... [ESC]", ["options", "dev"], next_menu="main")
-    Button("no", "quit", next_menu="main")
-    Button("yes", "quit", on_click=quit_game)
+    Button("back... [ESC]", "volume", "options")
+    Button("toggle player hitbox", "dev", toggle_slav_hitbox)
+    Button("toggle enemy hitboxes", "dev", toggle_cop_hitbox)
+    Button("back... [ESC]", ["options", "dev"], "main")
+    Button("no", "quit", "main")
+    Button("yes", "quit", quit_game)
     for buttons in Button.all.values():
         for button in buttons:
             button.initialise_dimensions(buttons)
