@@ -51,7 +51,7 @@ The game has only been tested on `3.11` so if you encounter any problems conside
 After installing python, you must install the required dependencies.
 This can be done using Pip and the provided `requirements.txt` file.
 Depending on your system, the exact commands may differ.
-Below are some suggestions that should work for the majority of users.
+Below are some suggestions that should work for the majority of users; these commands should be executed from the folder which you extracted Slav King to.
 
 Windows:
 
