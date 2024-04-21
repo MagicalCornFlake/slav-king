@@ -35,6 +35,13 @@ Beer **decreases** your speed by 2x and increases the damage dealt to cops by 3x
 
 ![Shop screenshot](https://github.com/kguzek/slav-king/blob/images/screenshots/shop.png?raw=true)
 
+## Download
+
+You can get the latest version of Slav King through the [Releases](https://github.com/kguzek/slav-king/releases) tab on the right-hand side of this GitHub repository.
+Locate the latest release (that is the release with the highest version number), and click on the source code release for that version.
+You have two options, the `.zip` release and the `.tar.gz` release. These should both work for all operating systems, but if you're on Windows the easiest to extract will be `.zip`. 
+Finally, once the download has completed, extract the archive using any archiving program (Windows File Explorer, WinRAR, 7-Zip) into a folder of your choosing.
+
 ## Installation
 
 You must have Python 3 installed to play this game. The latest Python version is recommended and can be installed at [python.org](https://www.python.org/downloads/).
