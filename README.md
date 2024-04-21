@@ -12,6 +12,8 @@ You are a criminal 'slav', who roams the streets of Russia and is generally up t
 There is no clear goal, but the intended playthrough consists of buying a weapon and killing as many cops as you can.
 As you shoot more cops, you earn more money, which you can use to buy better weapons and powerups such as mayonnaise and beer.
 
+![Gameplay screenshot 1](https://github.com/kguzek/slav-king/blob/images/screenshots/gameplay-1.png?raw=true)
+
 ### Powerups
 
 The powerups in the game can be purchased in the shop and are activated in-game by clicking the powerup icon.
@@ -30,6 +32,8 @@ Beer **decreases** your speed by 2x and increases the damage dealt to cops by 3x
 - Deagle ($150)
 - MP5 ($200)
 - AK-47 ($300)
+
+![Shop screenshot](https://github.com/kguzek/slav-king/blob/images/screenshots/shop.png?raw=true)
 
 ## Installation
 
