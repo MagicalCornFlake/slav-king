@@ -1,4 +1,5 @@
 """Main module for Slav King."""
+
 import random
 
 import pygame
@@ -29,7 +30,7 @@ try:
 except ImportError:
     from modules.platforms import posix_tools as os_tools
 
-if 'no-update' not in commandline.get_run_arguments():
+if "no-update" not in commandline.get_run_arguments():
     updater.ensure_latest_version()
 setup.ensure_singleton()
 setup.read_settings()

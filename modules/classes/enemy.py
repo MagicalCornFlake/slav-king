@@ -104,8 +104,8 @@ class Enemy(Human):
                 position_variance = seed + 2
                 random_x = (
                     random.randint(
-                        self.x_pos - 10 * position_variance,
-                        self.x_pos + 10 * position_variance,
+                        int(self.x_pos - 10 * position_variance),
+                        int(self.x_pos + 10 * position_variance),
                     )
                     + 128
                 )
